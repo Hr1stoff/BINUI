@@ -129,44 +129,47 @@ app.get('/getTable', authenticateToken, (req, res) => {
   });
 
   const generationQuery = (tableName) => {
-    const simpleTables = ['departments', 'position', 'systems', 'access_rights_attr', 'logs', 'open_in_systems', 'users', 'system_attributes'];
+    try {
 
-    if (simpleTables.includes(tableName)) {
-      return `SELECT * FROM ${tableName};`;
+      if (tableName === 'access_rights') {
+        return `
+          SELECT 
+      MIN(ar.id) AS id,
+      d.name AS department_id,
+      p.name AS position_id,
+      ar.user_type,
+      MAX(CASE WHEN s.name = 'AD' THEN 1 ELSE 0 END) AS AD,
+      MAX(CASE WHEN s.name = 'EMAIL' THEN 1 ELSE 0 END) AS EMAIL,
+      MAX(CASE WHEN s.name = 'BITRIX24' THEN 1 ELSE 0 END) AS BITRIX24,
+      MAX(CASE WHEN s.name = 'SM_BINUU00' THEN 1 ELSE 0 END) AS SM_BINUU00,
+      MAX(CASE WHEN s.name = 'SM_LOCAL' THEN 1 ELSE 0 END) AS SM_LOCAL,
+      MAX(CASE WHEN s.name = '1CERP' THEN 1 ELSE 0 END) AS 1CERP,
+      MAX(CASE WHEN s.name = '1CRTL' THEN 1 ELSE 0 END) AS 1CRTL,
+      MAX(CASE WHEN s.name = '1CZUP' THEN 1 ELSE 0 END) AS 1CZUP
+  FROM 
+      access_rights ar
+  JOIN 
+      departments d ON ar.department_id = d.id
+  JOIN 
+      position p ON ar.position_id = p.id
+  JOIN 
+      systems s ON ar.system_id = s.id
+  WHERE 
+      ar.id >= 1
+  GROUP BY 
+      d.name, p.name, ar.user_type
+  ORDER BY 
+      id ASC;
+  
+        `;
+      }
+      else {
+        return `SELECT * FROM ${tableName};`;
+      }
     }
-    if (tableName === 'access_rights') {
-      return `
-        SELECT 
-    MIN(ar.id) AS id,
-    d.name AS department_id,
-    p.name AS position_id,
-    ar.user_type,
-    MAX(CASE WHEN s.name = 'AD' THEN 1 ELSE 0 END) AS AD,
-    MAX(CASE WHEN s.name = 'EMAIL' THEN 1 ELSE 0 END) AS EMAIL,
-    MAX(CASE WHEN s.name = 'BITRIX24' THEN 1 ELSE 0 END) AS BITRIX24,
-    MAX(CASE WHEN s.name = 'SM_BINUU00' THEN 1 ELSE 0 END) AS SM_BINUU00,
-    MAX(CASE WHEN s.name = 'SM_LOCAL' THEN 1 ELSE 0 END) AS SM_LOCAL,
-    MAX(CASE WHEN s.name = '1CERP' THEN 1 ELSE 0 END) AS 1CERP,
-    MAX(CASE WHEN s.name = '1CRTL' THEN 1 ELSE 0 END) AS 1CRTL,
-    MAX(CASE WHEN s.name = '1CZUP' THEN 1 ELSE 0 END) AS 1CZUP
-FROM 
-    access_rights ar
-JOIN 
-    departments d ON ar.department_id = d.id
-JOIN 
-    position p ON ar.position_id = p.id
-JOIN 
-    systems s ON ar.system_id = s.id
-WHERE 
-    ar.id >= 1
-GROUP BY 
-    d.name, p.name, ar.user_type
-ORDER BY 
-    id ASC;
-
-      `;
+    catch {
+      return 'Invalid table name';
     }
-    return 'Invalid table name';
   };
 
   connection.connect((err) => {
@@ -188,18 +191,66 @@ ORDER BY
   });
 });
 
-// app.patch('/changeRow', authenticateToken, (req, res) => {
-//   const { host, user, password } = req.user;
-//   const connection = mysql.createConnection({
-//     host,
-//     user,
-//     password,
-//     database: 'system_access'
-//   });
-//   const query = ``
-  
+function logChange(tableName, recordId, action, oldValue, newValue) {
+  const query = `
+      INSERT INTO logs (table_name, record_id, action, timestamp, old_value, new_value)
+      VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+  `;
+  const values = [tableName, recordId, action, JSON.stringify(oldValue), JSON.stringify(newValue)];
 
-// })
+  db.query(query, values, (err) => {
+      if (err) console.error('Error logging change:', err);
+      else console.log('Change logged successfully');
+  });
+}
+
+
+// Эндпоинт на изменение данных таблиц
+app.patch('/changeRow', authenticateToken, (req, res) => {
+  const connection = mysql.createConnection({
+    host,
+    user,
+    password,
+    database: 'system_access'
+  });
+  const { host, user, password } = req.user;
+  const tableName = req.query.table;
+
+  const data = req.query.row;
+  const rowId = data.id;
+
+  if (!tableName) {
+    return res.status(400).json({ message: 'Имя таблицы не указано' });
+  }
+  if (!data && !rowId) {
+    return res.status(400).json({ message: 'Данные не были отправлены' });
+  }
+
+
+  const generationQuery = (tableName) => {
+    if (tableName == 'access_rights') {
+      const department = data.department_id
+      const position = data.position_id
+    }
+    else{
+      return `SELECT * FROM ${tableName} WHERE id = ${rowId}`;
+    }
+  }
+  
+  
+  const query = generationQuery(tableName)
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      connection.end();
+      return res.status(500).json({ message: 'Ошибка выполнения запроса: ' + err.message });
+    }
+    const oldData = results[0];
+
+
+  })
+
+})
 
 
 app.listen(port, () => {

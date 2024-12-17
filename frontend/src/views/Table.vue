@@ -36,6 +36,7 @@
                 </tr>
             </tbody>
         </table>
+
         <div class="table__modal" v-if="modalShow">
             <div class="table__modal-content">
                 <h3 class="table__modal-title">
@@ -111,7 +112,8 @@ export default {
     methods: {
         openEditWindow(row) {
             this.editableRow = { ...row };
-
+            console.log(this.editableRow.id);
+            
             this.modalShow = true;
         },
         closeEditWindow() {
@@ -236,12 +238,13 @@ export default {
     height: 500px;
 }
 
-.table__explanation{
+.table__explanation {
     font-family: 'Open Sans', sans-serif;
     font-size: 32px;
     font-weight: 700;
 }
-.table__explanation > span{
+
+.table__explanation>span {
     font-family: 'Open Sans', sans-serif;
     font-size: 32px;
     font-weight: 700;
