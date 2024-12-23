@@ -42,7 +42,7 @@ export default {
     mounted() {
         if (this.tables.length > 0) {
             this.selectedTable = this.tables[0];
-
+            
         }
     }
 }

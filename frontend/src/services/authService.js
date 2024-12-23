@@ -4,7 +4,7 @@ const API_URL = 'http://localhost:3000';
 
 class AuthService {
   static async login({ host, login, password }) {
-    const response = await axios.post(`${API_URL}/connect`, {
+    const response = await axios.post(`${API_URL}/auth/connect`, {
       host,
       user: login,
       password,
@@ -31,7 +31,7 @@ class AuthService {
       throw new Error('Refresh token отсутствует');
     }
 
-    const response = await axios.post(`${API_URL}/refresh`, { refreshToken });
+    const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
     const { accessToken } = response.data;
 
     if (accessToken) {

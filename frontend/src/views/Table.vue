@@ -42,11 +42,23 @@
                 <h3 class="table__modal-title">
                     Редактирование строки
                 </h3>
-                <form class="table__modal-form">
+                <form class="table__modal-form" @submit.prevent="sendEdit">
                     <div class="table__modal-field" v-for="(value, key) in editableRow" :key="key">
                         <label class="table__modal-label">{{ key }}:</label>
-                        <textarea v-model="editableRow[key]" class="table__modal-input" rows="1"
-                            :readonly="key === 'id'"></textarea>
+
+                        <select v-if="key === 'user_type'" v-model="editableRow[key]" class="table__modal-input">
+                            <option v-for="option in userTypeOptions" :key="option" :value="option">{{ option }}
+                            </option>
+                        </select>
+                        <select v-else-if="allSystems.includes(key)" v-model="editableRow[key]"
+                            class="table__modal-input">
+                            <option :value="0">0</option>
+                            <option :value="1">1</option>
+                        </select>
+
+                        <textarea v-else v-model="editableRow[key]" class="table__modal-input" rows="1"
+                            :readonly="key === 'id'">
+                        </textarea>
                     </div>
                     <div class="table__modal-buttons">
                         <button class="table__modal-btn table__modal-btn_safe">Сохранить</button>
@@ -54,7 +66,6 @@
                             @click="closeEditWindow">Отменить</button>
                     </div>
                 </form>
-
             </div>
         </div>
     </div>
@@ -62,6 +73,7 @@
 
 <script>
 import Preload from '@/components/Preload.vue';
+import api from '@/services/api';
 export default {
     props: {
         data: {
@@ -74,6 +86,10 @@ export default {
         },
         selectedTable: {
             type: String
+        },
+        allSystems: {
+            type: Array,
+            required: true
         }
     },
     data() {
@@ -82,8 +98,12 @@ export default {
             isLoading: true,
             deletingRow: null,
             modalShow: false,
-            editableRow: {},
-            token: localStorage.getItem('accessToken')
+            editableRow: null,
+            newRow: null,
+            token: localStorage.getItem('accessToken'),
+            userTypeOptions: null,
+            oldRow: null,
+
         }
     },
     computed: {
@@ -96,6 +116,9 @@ export default {
         },
     }, components: {
         Preload
+    },
+    mounted() {
+        this.fetchUserTypeOptions();
     },
     watch: {
         data: {
@@ -112,14 +135,90 @@ export default {
     methods: {
         openEditWindow(row) {
             this.editableRow = { ...row };
-            console.log(this.editableRow.id);
-            
             this.modalShow = true;
         },
+        sendEdit() {
+            this.oldRow = this.data.find(row => row.id === this.editableRow.id);
+            const checkUpdate = (nameTable, editableRow) => {
+                if (!this.oldRow) return null;
+
+                if (nameTable == 'access_rights') {
+                    const result = {
+                        id: this.oldRow.id,
+                        department_id: this.oldRow.department_id,
+                        position_id: this.oldRow.position_id,
+                        openForSystem: [],
+                        closeForSystem: []
+                    };
+                    let hasChanges = false;
+                    for (const key in editableRow) {
+                        if (editableRow.hasOwnProperty(key) && this.oldRow[key] !== editableRow[key]) {
+                            if (this.allSystems.includes(key)) {
+                            
+                                if (editableRow[key] === 1) {
+                                    result.openForSystem.push(key);
+                                } else if (editableRow[key] === 0) {
+                                    result.closeForSystem.push(key);
+                                }
+                            } else {
+                    
+                                result[key] = editableRow[key];
+                            }
+                            hasChanges = true;
+                        }
+                    }
+
+                    return hasChanges ? result : null;
+                } else {
+                    const checkForUpdate = (oldCheckRow, editableRow) =>
+                        JSON.stringify(oldCheckRow) !== JSON.stringify(editableRow) ? editableRow : null;
+                    return checkForUpdate(this.oldRow, editableRow);
+                }
+            };
+
+            const updatedRow = checkUpdate(this.selectedTable, this.editableRow);
+            if (!updatedRow) {
+                alert('Вы ничего не поменяли!');
+                return;
+            }
+            this.newRow = updatedRow;
+            if (this.newRow) {
+                try {
+                    const response = api.patch('/update/changeRow',
+                        {
+                            nameTable: this.selectedTable,
+                            oldRow: this.oldRow,
+                            editRow: this.newRow
+                        },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${this.token}`
+                            }
+                        });
+                    console.log('Ответ от сервера:', response.data);
+                } catch (err) {
+                    alert(err, 'Ошибка при сохранении изменений.');
+                }
+            }
+        },
+
         closeEditWindow() {
             this.modalShow = false;
             this.editableRow = {};
         },
+        async fetchUserTypeOptions() {
+            try {
+                const response = await api.get('/userType/getUserTypeOptions', {
+                    headers: {
+                        Authorization: `Bearer ${this.token}`
+                    }
+                });
+                this.userTypeOptions = response.data.userTypeOptions;
+            }
+            catch (error) {
+                console.error('Ошибка при загрузке userTypeOptions:', error);
+            }
+        }
     }
 
 }

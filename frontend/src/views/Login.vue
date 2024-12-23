@@ -22,7 +22,7 @@
                 </div>
                 <div class="login__post">
                     <button type="submit" class="login__btn" :disabled="isLoading">
-                        {{ isLoading ? 'Загрузка...' : 'Вход' }}
+                        {{ isLoading ? "Загрузка..." : "Вход" }}
                     </button>
                 </div>
                 <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
@@ -32,9 +32,7 @@
 </template>
 
 <script>
-import api from "@/services/api";
 import AuthService from "@/services/authService";
-
 
 export default {
     data() {
@@ -44,33 +42,43 @@ export default {
                 user: "",
                 password: "",
             },
-            errorMessage: '',
-            isLoading: false
+            errorMessage: "",
+            isLoading: false,
         };
-    }, methods: {
+    },
+    created() {
+        const savedLoadingState = localStorage.getItem("isLoading");
+        this.isLoading = savedLoadingState === "true";
+    },
+    methods: {
         async handleLogin() {
             this.errorMessage = "";
-            this.isLoading = true;
-
+            localStorage.setItem("isLoading", true);
             try {
                 const response = await AuthService.login({
                     host: this.form.host,
                     login: this.form.user,
                     password: this.form.password,
                 });
-
                 this.$router.push("/cabinet");
             } catch (error) {
                 console.error("Ошибка авторизации:", error);
-                this.errorMessage =
-                    error.response?.data?.message || "Ошибка авторизации. Попробуйте снова.";
+                if (error.response) {
+                    this.errorMessage = error.response.data?.message || "Ошибка сервера. Попробуйте снова.";
+                } else if (error.request) {
+                    this.errorMessage = "Нет ответа от сервера. Проверьте соединение.";
+                } else {
+                    this.errorMessage = "Неизвестная ошибка. Попробуйте снова.";
+                }
             } finally {
                 this.isLoading = false;
+                localStorage.setItem("isLoading", false);
             }
         },
     },
 };
 </script>
+
 
 <style>
 .login {

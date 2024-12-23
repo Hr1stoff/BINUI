@@ -3,13 +3,9 @@
         <Preload />
     </div>
     <div v-else>
-
         <Header :tables="tables" @tableSelected="getSelectedTable" />
-
-        <p v-if="error" class="error">{{ error  }}</p>
-
-        <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="handleDeleteRow" />
-
+        <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="handleDeleteRow"
+            :allSystems="allSystems" />
     </div>
 </template>
 
@@ -28,6 +24,7 @@ export default {
             selectedTable: '',
             token: localStorage.getItem('accessToken'),
             isLoading: localStorage.getItem('isLoading'),
+            allSystems: []
         };
     },
     async beforeRouteEnter(to, from, next) {
@@ -35,6 +32,7 @@ export default {
     },
     created() {
         this.getTables();
+        this.getSystems();
         if (!this.tables.length && !this.selectedTable.length && !this.dataTable.length) {
             this.loadData();
         }
@@ -47,7 +45,7 @@ export default {
     methods: {
         async getTables() {
             try {
-                const response = await api.get('/getAllTable', {
+                const response = await api.get('/tables/getAllTable', {
                     headers: {
                         Authorization: `Bearer ${this.token}`
                     }
@@ -59,7 +57,6 @@ export default {
         },
         getSelectedTable(table) {
             this.selectedTable = table;
-            console.log("Получена таблица от дочернего компонента:", table);
             this.getTableData();
         },
         handleDeleteRow(id) {
@@ -68,7 +65,7 @@ export default {
         },
         async getTableData() {
             try {
-                const response = await api.get('/getTable', {
+                const response = await api.get('/tables/getTable', {
                     headers: {
                         Authorization: `Bearer ${this.token}`,
                     },
@@ -97,6 +94,21 @@ export default {
                 this.isLoading = false;
             }
         },
+        async getSystems() {
+            try {
+                const response = await api.get('/tables/getSystems', {
+                    headers: {
+                        Authorization: `Bearer ${this.token}`
+                    }
+
+                });
+                const result = response.data.result
+                this.allSystems = result.map(system => system.name);
+            }
+            catch (err) {
+                this.handleError(err, 'Ошибка при получении списка таблиц');
+            }
+        }
     },
 };
 </script>
@@ -106,7 +118,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh; 
-    width: 100%; 
+    height: 100vh;
+    width: 100%;
 }
 </style>
