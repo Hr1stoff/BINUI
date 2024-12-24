@@ -9,7 +9,11 @@
                         </option>
                     </select></div>
             </div>
-            <div class="header__signout"><button @click="exit" class="header__btn">Выход</button></div>
+            <div class="header__buttons">
+                <button class="header__btn" @click="$emit('openAddRow')">Добавить</button>
+                <button class="header__btn header__refresh" @click="$emit('refreshData')">Обновить таблицу</button>
+                <button @click="exit" class="header__btn header__signout">Выход</button>
+            </div>
         </div>
     </header>
 </template>
@@ -42,7 +46,7 @@ export default {
     mounted() {
         if (this.tables.length > 0) {
             this.selectedTable = this.tables[0];
-            
+
         }
     }
 }
@@ -54,7 +58,6 @@ export default {
 }
 
 .header__wrapper {
-
     background-color: #A7CEA7;
     display: flex;
     justify-content: space-between;
@@ -92,16 +95,36 @@ export default {
     font-size: 16px;
 }
 
-.header__signout {}
+.header__buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
 
 .header__btn {
-    width: 100px;
+    padding: 0 10px;
     height: 32px;
     background-color: #4DA2E7;
     font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 400;
     font-size: 16px;
     color: #fff;
     box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.header__signout:hover {
+    background-color: #D9262A;
+    transition: 0.2s linear;
+}
+
+.header__refresh {
+    background-color: #4DA2E7;
+    color: #fff;
+}
+
+.header__refresh:hover {
+    color: #000;
+    background-color: #fff;
+    transition: 0.2s linear;
 }
 </style>

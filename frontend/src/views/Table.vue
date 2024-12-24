@@ -5,7 +5,6 @@
         </div>
         <Preload v-if="isLoading" />
 
-
         <div class="table__wrapper table__wrapper_empty" v-else-if="!isLoading && data.length === 0">
             <h1 class="table__explanation">
                 Данная таблица <span>

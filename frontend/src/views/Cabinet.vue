@@ -3,16 +3,19 @@
         <Preload />
     </div>
     <div v-else>
-        <Header :tables="tables" @tableSelected="getSelectedTable" />
+        <Header :tables="tables" @tableSelected="getSelectedTable" @refreshData="fetchData" @openAddRow="openAddRow" />
         <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="handleDeleteRow"
             :allSystems="allSystems" />
     </div>
+    <AddRow v-if="showAddRow" @closeAddRow="closeAddRow" :tables="tables" :selectedTable="selectedTable" />
+
 </template>
 
 <script>
 import Preload from '@/components/Preload.vue';
 import Header from '@/components/Header.vue';
 import Table from '@/views/Table.vue';
+import AddRow from '@/components/addRow.vue';
 import api from '@/services/api';
 
 export default {
@@ -24,7 +27,8 @@ export default {
             selectedTable: '',
             token: localStorage.getItem('accessToken'),
             isLoading: localStorage.getItem('isLoading'),
-            allSystems: []
+            allSystems: [],
+            showAddRow: false,
         };
     },
     async beforeRouteEnter(to, from, next) {
@@ -40,9 +44,23 @@ export default {
     components: {
         Header,
         Table,
-        Preload
+        Preload,
+        AddRow
     },
     methods: {
+        async fetchData() {
+            try {
+                this.isLoading = true;
+                await Promise.all([this.getTables(), this.getSystems()]);
+                if (this.selectedTable) {
+                    await this.getTableData();
+                }
+            } catch (err) {
+                this.handleError(err, 'Ошибка при обновлении данных');
+            } finally {
+                this.isLoading = false;
+            }
+        },
         async getTables() {
             try {
                 const response = await api.get('/tables/getAllTable', {
@@ -108,7 +126,14 @@ export default {
             catch (err) {
                 this.handleError(err, 'Ошибка при получении списка таблиц');
             }
+        },
+        openAddRow() {
+            this.showAddRow = true
+        },
+        closeAddRow() {
+            this.showAddRow = false;
         }
+
     },
 };
 </script>
