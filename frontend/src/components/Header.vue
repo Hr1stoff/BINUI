@@ -10,7 +10,7 @@
                     </select></div>
             </div>
             <div class="header__buttons">
-                <button class="header__btn" @click="$emit('openAddRow')">Добавить</button>
+                <button class="header__btn header__btn_add-row" @click="$emit('openAddRow')">Добавить</button>
                 <button class="header__btn header__refresh" @click="$emit('refreshData')">Обновить таблицу</button>
                 <button @click="exit" class="header__btn header__signout">Выход</button>
             </div>
@@ -122,7 +122,8 @@ export default {
     color: #fff;
 }
 
-.header__refresh:hover {
+.header__refresh:hover,
+.header__btn_add-row:hover {
     color: #000;
     background-color: #fff;
     transition: 0.2s linear;

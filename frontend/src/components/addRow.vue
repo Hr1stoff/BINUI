@@ -4,14 +4,24 @@
             <div class="add-row__header">
                 <div class="add-row__title">
                     <span class="add-row__name">Добавление новых данных в: </span>
-                    <select class="add-row__select" v-model="selected">
-                        <option v-for="(table, index) in tables" :key="index" :value="table" class="add-row__option">
+                    <select class="add-row__select" v-model="selected" @change="onTableSelect">
+                        <option v-for="(table, index) in localTables" :key="index" :value="table"
+                            class="add-row__option">
                             {{ table }}
                         </option>
                     </select>
                 </div>
+                <form class="add-row__form">
+                    <div v-for="(item, index) in localTypeColumns" :key="index" class="add-row__field">
+                        <label :for="`field-${index}`">{{ item.Field }}</label>
+                        <input v-model="formValues[item.Field]" :id="`field-${index}`" type="text" />
+                        <select name="" id="" v-if="item.enumValues">
+                            <option v-for="item in item.enumValues" :key="item">{{ item }}</option>
+                        </select>
+                    </div>
+                </form>
                 <div class="add-row__buttons">
-                    <button class="add-row__btn" @click="$emit('closeAddRow')">Выйти</button>
+                    <button class="add-row__btn" @click="$emit('closeAddRowLocal')">Отмена</button>
                 </div>
             </div>
         </div>
@@ -21,27 +31,51 @@
 <script>
 export default {
     props: {
-        tables: {
+        localTables: {
             type: Array,
-            required: true
+            required: true,
         },
         selectedTable: {
-            type: String
-        }
+            type: String,
+        },
+        localTypeColumns: {
+            type: Array,
+            required: true,
+        },
     },
     data() {
         return {
-            selected: ''
-        }
+            selected: this.selectedTable || '',
+            typeColumns: [],
+            formValues: {},
+        };
     },
-    created() {
-        if(this.selectedTable){
-            this.selected = this.selectedTable;
-        }
+    mounted() {
+        this.getColumns();
     },
-
-
-}
+    watch: {
+        selected(newValue) {
+            this.$emit('sendSelectedTable', newValue);
+        },
+    },
+    methods: {
+        getColumns() {
+            if (this.selectedTable) {
+                this.selected = this.selectedTable;
+                this.$emit('getColumnsParent', this.selected);
+            }
+        },
+        initializeFormValues() {
+            this.formValues = this.typeColumns.reduce((acc, item) => {
+                acc[item.Field] = '';
+                return acc;
+            }, {});
+        },
+        onTableSelect() {
+            this.$emit('getColumnsParent', this.selected);
+        },
+    },
+};
 </script>
 
 <style>

@@ -1,17 +1,11 @@
 <template>
     <div class="table">
+        <!-- После поиска  -->
         <div class="table__search">
             <input type="text" v-model="searchQuery" placeholder="Введите текст для поиска" class="table__search-input">
         </div>
-        <Preload v-if="isLoading" />
 
-        <div class="table__wrapper table__wrapper_empty" v-else-if="!isLoading && data.length === 0">
-            <h1 class="table__explanation">
-                Данная таблица <span>
-                    {{ selectedTable }}
-                </span> пустая
-            </h1>
-        </div>
+        <!-- Отображение таблицы -->
         <table class="table__wrapper" v-if="filterData.length > 0 && headers.length > 0">
             <thead class="table__head">
                 <tr class="table__row">
@@ -36,6 +30,7 @@
             </tbody>
         </table>
 
+        <!-- Модально окно по измнению строки -->
         <div class="table__modal" v-if="modalShow">
             <div class="table__modal-content">
                 <h3 class="table__modal-title">
@@ -66,6 +61,17 @@
                     </div>
                 </form>
             </div>
+        </div>
+
+        <!-- Preload для ожидания ответа из бд -->
+        <Preload v-if="isLoading" />
+        <!-- Если таблица пустая  -->
+        <div class="table__wrapper table__wrapper_empty" v-else-if="!isLoading && data.length === 0">
+            <h1 class="table__explanation">
+                Данная таблица <span>
+                    {{ selectedTable }}
+                </span> пустая
+            </h1>
         </div>
     </div>
 </template>
@@ -106,6 +112,7 @@ export default {
         }
     },
     computed: {
+        // Поиск в таблице
         filterData() {
             if (!this.searchQuery) {
                 return this.data;
@@ -132,12 +139,22 @@ export default {
         }
     },
     methods: {
+        // Открытие модального окна для измнение строки
         openEditWindow(row) {
             this.editableRow = { ...row };
             this.modalShow = true;
         },
+        // Закрытие модального окна для измнение строки
+        closeEditWindow() {
+            this.modalShow = false;
+            this.editableRow = {};
+        },
+        // Отправка обновленной строки
         sendEdit() {
+            // Получение старых данных строки
             this.oldRow = this.data.find(row => row.id === this.editableRow.id);
+            // Функция определения в какой таблице поменялась строка
+            // Также обновлись ли данные или нет 
             const checkUpdate = (nameTable, editableRow) => {
                 if (!this.oldRow) return null;
 
@@ -153,14 +170,14 @@ export default {
                     for (const key in editableRow) {
                         if (editableRow.hasOwnProperty(key) && this.oldRow[key] !== editableRow[key]) {
                             if (this.allSystems.includes(key)) {
-                            
+
                                 if (editableRow[key] === 1) {
                                     result.openForSystem.push(key);
                                 } else if (editableRow[key] === 0) {
                                     result.closeForSystem.push(key);
                                 }
                             } else {
-                    
+
                                 result[key] = editableRow[key];
                             }
                             hasChanges = true;
@@ -176,11 +193,15 @@ export default {
             };
 
             const updatedRow = checkUpdate(this.selectedTable, this.editableRow);
+
+            // ПОМЕНЯТЬ НА ОТДЕЛЬНОЕ ОКНО УВЕДОМЛЕНИЯ
             if (!updatedRow) {
                 alert('Вы ничего не поменяли!');
                 return;
             }
+
             this.newRow = updatedRow;
+            // отправка данных
             if (this.newRow) {
                 try {
                     const response = api.patch('/update/changeRow',
@@ -200,11 +221,7 @@ export default {
                 }
             }
         },
-
-        closeEditWindow() {
-            this.modalShow = false;
-            this.editableRow = {};
-        },
+        // Функция для получения какого типа должна быть строка user_type в access_right
         async fetchUserTypeOptions() {
             try {
                 const response = await api.get('/userType/getUserTypeOptions', {

@@ -4,10 +4,13 @@
     </div>
     <div v-else>
         <Header :tables="tables" @tableSelected="getSelectedTable" @refreshData="fetchData" @openAddRow="openAddRow" />
+
         <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="handleDeleteRow"
             :allSystems="allSystems" />
     </div>
-    <AddRow v-if="showAddRow" @closeAddRow="closeAddRow" :tables="tables" :selectedTable="selectedTable" />
+    <AddRow v-if="showAddRow" @closeAddRowLocal="closeAddRow" :localTables="tables" :selectedTable="selectedTable"
+        @getColumnsParent="getColumns" :localTypeColumns="typeColumns" @sendSelectedTable="getColumns" />
+
 
 </template>
 
@@ -29,6 +32,7 @@ export default {
             isLoading: localStorage.getItem('isLoading'),
             allSystems: [],
             showAddRow: false,
+            typeColumns: []
         };
     },
     async beforeRouteEnter(to, from, next) {
@@ -73,14 +77,6 @@ export default {
                 this.handleError(err, 'Ошибка при получении списка таблиц');
             }
         },
-        getSelectedTable(table) {
-            this.selectedTable = table;
-            this.getTableData();
-        },
-        handleDeleteRow(id) {
-            console.log('Удаление', id);
-
-        },
         async getTableData() {
             try {
                 const response = await api.get('/tables/getTable', {
@@ -97,11 +93,6 @@ export default {
             } catch (err) {
                 this.handleError(err, 'Ошибка при получении данных таблицы');
             }
-        },
-
-        handleError(err, defaultMessage) {
-            console.error(defaultMessage, err.response?.data || err.message);
-            this.error = `${defaultMessage}: ${err.response?.data?.message || err.message}`;
         },
         async loadData() {
             try {
@@ -127,13 +118,41 @@ export default {
                 this.handleError(err, 'Ошибка при получении списка таблиц');
             }
         },
+        async getColumns(nameTable) {
+            
+            try {
+                const response = await api.get('/tables/getColumnsTable', {
+                    headers: {
+                        Authorization: `Bearer ${this.token}`
+                    },
+                    params: {
+                        nameTable: nameTable
+                    }
+                });
+                this.typeColumns = response.data.columns;
+            }
+            catch (err) {
+                this.handleError(err, 'Ошибка в получении полей таблицы');
+            }
+        },
+        getSelectedTable(table) {
+            this.selectedTable = table;
+            this.getTableData();
+        },
+        handleDeleteRow(id) {
+            console.log('Удаление', id);
+
+        },
         openAddRow() {
             this.showAddRow = true
+        },
+        handleError(err, defaultMessage) {
+            console.error(defaultMessage, err.response?.data || err.message);
+            this.error = `${defaultMessage}: ${err.response?.data?.message || err.message}`;
         },
         closeAddRow() {
             this.showAddRow = false;
         }
-
     },
 };
 </script>

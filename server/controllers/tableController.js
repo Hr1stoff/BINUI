@@ -54,4 +54,30 @@ router.get('/getSystems', authenticateToken, async (req, res) => {
   }
 })
 
+router.get('/getColumnsTable', authenticateToken, async (req, res) => {
+  const { host, user, password } = req.user;
+  const { nameTable } = req.query;
+
+  try {
+    const connection = await createConnection({ host, user, password })
+    const [columns] = await connection.query(`SHOW COLUMNS FROM ${nameTable};`);
+    const formattedColumns = columns.map(column => {
+      if (column.Type.startsWith('enum')) {
+        const enumValues = column.Type
+          .replace(/^enum\(/, '')
+          .replace(/\)$/, '')
+          .split(',')
+          .map(value => value.replace(/^'|'$/g, ''));
+        return { ...column, enumValues };
+      }
+      return column;
+    });
+    
+    res.status(200).json({ columns: formattedColumns });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Ошибка в получении полей таблицы' })
+  }
+})
+
 module.exports = router;
