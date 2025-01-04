@@ -11,18 +11,22 @@
                         </option>
                     </select>
                 </div>
-                <form class="add-row__form">
-                    <div v-for="(item, index) in localTypeColumns" :key="index" class="add-row__field">
-                        <label :for="`field-${index}`">{{ item.Field }}</label>
-                        <input v-model="formValues[item.Field]" :id="`field-${index}`" type="text" />
-                        <select name="" id="" v-if="item.enumValues">
-                            <option v-for="item in item.enumValues" :key="item">{{ item }}</option>
-                        </select>
-                    </div>
-                </form>
-                <div class="add-row__buttons">
-                    <button class="add-row__btn" @click="$emit('closeAddRowLocal')">Отмена</button>
+            </div>
+            <form class="add-row__form">
+                <div v-for="(item, index) in localTypeColumns" :key="index" class="add-row__field">
+
+                    <label :for="`field-${index}`">{{ item.Field }}</label>
+
+                    <input v-model="formValues[item.Field]" :id="`field-${index}`" type="text" />
+                    
+                    <select v-if="item.enumValues">
+                        <option v-for="item in item.enumValues" :key="item">{{ item }}</option>
+                    </select>
                 </div>
+            </form>
+
+            <div class="add-row__buttons">
+                <button class="add-row__btn" @click="$emit('closeAddRowLocal')">Отмена</button>
             </div>
         </div>
     </div>
@@ -93,6 +97,9 @@ export default {
 }
 
 .add-row__wrapper {
+    display: flex; 
+    flex-direction: column;
+    gap: 20px;
     width: 100%;
     padding: 20px;
     border-radius: 5px;
@@ -112,7 +119,6 @@ export default {
     font-family: 'Open Sans', sans-serif;
     font-size: 32px;
     font-weight: 700;
-    padding: 15px 0px;
 }
 
 .add-row__select {
@@ -142,5 +148,17 @@ export default {
     transition: 0.1s linear;
     border: 1px solid #ccc;
     color: #fff;
+}
+
+.add-row__form {
+    display: flex;
+    justify-content: space-between;
+
+}
+.add-row__field {
+    display: flex;
+    flex-direction: column;
+    border:1px solid #ccc
+
 }
 </style>
