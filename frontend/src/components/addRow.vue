@@ -15,24 +15,55 @@
             <form class="add-row__form">
                 <div v-for="(item, index) in localTypeColumns" :key="index" class="add-row__field">
 
-                    <label :for="`field-${index}`">{{ item.Field }}</label>
+                    <label class="add-row__attr-title" :for="`${item.Field}`">{{ item.Field }}</label>
 
-                    <input v-model="formValues[item.Field]" :id="`field-${index}`" type="text" />
+                    <div v-if="item.Field === 'department_id'">
+                        <select v-if="item.Field === 'department_id'" v-model="formValues[item.Field]"
+                            class="add-row__input">
+                            <option v-for="(name, id) in departamentName" :key="id" :value="id">
+                                {{ name.name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div v-if="item.Field === 'position_id'">
+                        <select v-model="formValues[item.Field]" class="add-row__input">
+                            <option v-for="(name, id) in positionName" :key="id" :value="id">
+                                {{ name.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div v-if="item.Field === 'system_id'">
+                        <select v-model="formValues[item.Field]" class="add-row__input">
+                            <option v-for="(name, id) in systemName" :key="id" :value="id">
+                                {{ name.name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div v-if="item.enumValues">
+                        <select v-if="item.enumValues" class="add-row__input">
+                            <option v-for="item in item.enumValues" :key="item">{{ item }}</option>
+                        </select>
+                    </div>
                     
-                    <select v-if="item.enumValues">
-                        <option v-for="item in item.enumValues" :key="item">{{ item }}</option>
-                    </select>
+                    <div v-else>
+                        <input class="add-row__input" v-model="formValues[item.Field]" :id="`${item.Field}`" type="text"
+                            v-if="!item.enumValues" />
+                    </div>
+
+
+                </div>
+                <div class="add-row__buttons">
+                    <button class="add-row__btn" @click="$emit('closeAddRowLocal')">Отмена</button>
                 </div>
             </form>
-
-            <div class="add-row__buttons">
-                <button class="add-row__btn" @click="$emit('closeAddRowLocal')">Отмена</button>
-            </div>
         </div>
     </div>
 </template>
 
 <script>
+import api from '@/services/api';
 export default {
     props: {
         localTables: {
@@ -49,18 +80,28 @@ export default {
     },
     data() {
         return {
+            token: localStorage.getItem('accessToken'),
             selected: this.selectedTable || '',
             typeColumns: [],
             formValues: {},
+            departamentName: {},
+            positionName: {},
+            systemName: {}
         };
     },
     mounted() {
         this.getColumns();
+        this.loadReferenceData();
     },
     watch: {
         selected(newValue) {
             this.$emit('sendSelectedTable', newValue);
         },
+        getTipData() {
+            for (let index = 0; index < this.localTypeColumns.length; index++) {
+                console.log(this.localTypeColumns[index].Field);
+            }
+        }
     },
     methods: {
         getColumns() {
@@ -78,6 +119,30 @@ export default {
         onTableSelect() {
             this.$emit('getColumnsParent', this.selected);
         },
+        async getData(tableName) {
+            try {
+                const response = await api.get('/tables/getTable', {
+                    headers: {
+                        Authorization: `Bearer ${this.token}`,
+                    },
+                    params: { table: tableName },
+                });
+                const data = response.data.table;
+
+                return data;
+            } catch (err) {
+                this.handleError(err, 'Ошибка при получении данных таблицы');
+                return null
+            }
+        },
+        async loadReferenceData() {
+            if (this.selected == 'access_rights') {
+                this.departamentName = await this.getData('departments');
+                this.positionName = await this.getData('position');
+                this.systemName = await this.getData('systems')
+            }
+        }
+
     },
 };
 </script>
@@ -97,10 +162,10 @@ export default {
 }
 
 .add-row__wrapper {
-    display: flex; 
+    display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 100%;
+    min-width: 1500px;
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -132,7 +197,49 @@ export default {
 
 .add-row__option {}
 
-.add-row__buttons {}
+
+.add-row__form {
+    display: flex;
+    gap: 10px;
+
+}
+
+.add-row__field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.add-row__attr-title {
+    border: 1px solid #000;
+    padding: 5px 10px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: none;
+}
+
+.add-row__input {
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 10px;
+    line-height: 1.5;
+    min-height: 100px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border: 1px solid #000;
+}
+
+.add-row__buttons {
+    display: flex;
+    align-items: center;
+}
 
 .add-row__btn {
     width: 150px;
@@ -148,17 +255,5 @@ export default {
     transition: 0.1s linear;
     border: 1px solid #ccc;
     color: #fff;
-}
-
-.add-row__form {
-    display: flex;
-    justify-content: space-between;
-
-}
-.add-row__field {
-    display: flex;
-    flex-direction: column;
-    border:1px solid #ccc
-
 }
 </style>

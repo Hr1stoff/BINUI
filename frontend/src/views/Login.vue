@@ -157,4 +157,10 @@ export default {
     font-size: 16px;
     box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
 }
+
+.login__btn:hover {
+    color: #000;
+    background-color: #fff;
+    transition: 0.2s linear;
+}
 </style>

@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 const createConnection = async ({ host, user, password }) => {
-  return mysql.createConnection({ host, user, password, database: 'system_access' });
+  return mysql.createConnection({ host, user, password, database: 'system_access', connectTimeout: 10000});
 };
 
 module.exports = { createConnection };

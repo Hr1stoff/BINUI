@@ -22,46 +22,12 @@
                         <div class="table__buttons">
                             <button class="table__btn table__btn_change" @click="openEditWindow(row)">
                                 Изменить</button>
-                            <button class="table__btn table__btn_delete"
-                                @click="$emit('deleteRow', row.id)">Удалить</button>
+                            <button class="table__btn table__btn_delete" @click="onDeleteRow(row.id)">Удалить</button>
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
-
-        <!-- Модально окно по измнению строки -->
-        <div class="table__modal" v-if="modalShow">
-            <div class="table__modal-content">
-                <h3 class="table__modal-title">
-                    Редактирование строки
-                </h3>
-                <form class="table__modal-form" @submit.prevent="sendEdit">
-                    <div class="table__modal-field" v-for="(value, key) in editableRow" :key="key">
-                        <label class="table__modal-label">{{ key }}:</label>
-
-                        <select v-if="key === 'user_type'" v-model="editableRow[key]" class="table__modal-input">
-                            <option v-for="option in userTypeOptions" :key="option" :value="option">{{ option }}
-                            </option>
-                        </select>
-                        <select v-else-if="allSystems.includes(key)" v-model="editableRow[key]"
-                            class="table__modal-input">
-                            <option :value="0">0</option>
-                            <option :value="1">1</option>
-                        </select>
-
-                        <textarea v-else v-model="editableRow[key]" class="table__modal-input" rows="1"
-                            :readonly="key === 'id'">
-                        </textarea>
-                    </div>
-                    <div class="table__modal-buttons">
-                        <button class="table__modal-btn table__modal-btn_safe">Сохранить</button>
-                        <button type="button" class="table__modal-btn table__modal-btn_cancel"
-                            @click="closeEditWindow">Отменить</button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
         <!-- Preload для ожидания ответа из бд -->
         <Preload v-if="isLoading" />
@@ -74,12 +40,44 @@
             </h1>
         </div>
     </div>
+    <!-- Модально окно по измнению строки -->
+    <div class="table__modal" v-if="modalShow">
+        <div class="table__modal-content">
+            <h3 class="table__modal-title">
+                Редактирование строки
+            </h3>
+            <form class="table__modal-form" @submit.prevent="sendEdit">
+                <div class="table__modal-field" v-for="(value, key) in editableRow" :key="key">
+                    <label class="table__modal-label">{{ key }}:</label>
+
+                    <select v-if="key === 'user_type'" v-model="editableRow[key]" class="table__modal-input">
+                        <option v-for="option in userTypeOptions" :key="option" :value="option">{{ option }}
+                        </option>
+                    </select>
+                    <select v-else-if="allSystems.includes(key)" v-model="editableRow[key]" class="table__modal-input">
+                        <option :value="0">0</option>
+                        <option :value="1">1</option>
+                    </select>
+
+                    <textarea v-else v-model="editableRow[key]" class="table__modal-input" rows="1"
+                        :readonly="key === 'id'">
+                        </textarea>
+                </div>
+                <div class="table__modal-buttons">
+                    <button class="table__modal-btn table__modal-btn_safe">Сохранить</button>
+                    <button type="button" class="table__modal-btn table__modal-btn_cancel"
+                        @click="closeEditWindow">Отменить</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </template>
 
 <script>
 import Preload from '@/components/Preload.vue';
 import api from '@/services/api';
 export default {
+    emits: ["deleteRow"],
     props: {
         data: {
             type: Array,
@@ -234,7 +232,10 @@ export default {
             catch (error) {
                 console.error('Ошибка при загрузке userTypeOptions:', error);
             }
-        }
+        },
+        onDeleteRow(rowId) {
+            this.$emit("deleteRow", rowId); // Генерация пользовательского события
+        },
     }
 
 }
@@ -382,7 +383,6 @@ export default {
 .table__modal-content {
     padding: 20px;
     border-radius: 5px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     background-color: #fff;
 }
 

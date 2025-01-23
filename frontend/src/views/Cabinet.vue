@@ -119,7 +119,7 @@ export default {
             }
         },
         async getColumns(nameTable) {
-            
+
             try {
                 const response = await api.get('/tables/getColumnsTable', {
                     headers: {
