@@ -2,12 +2,13 @@ import axios from 'axios';
 import AuthService from '@/services/authService';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: 'http://localhost:3000/api',
 });
+
 
 // Добавляем токен в заголовки запросов
 api.interceptors.request.use(async (config) => {
-  const token = localStorage.getItem('accessToken');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
@@ -17,17 +18,57 @@ api.interceptors.request.use(async (config) => {
 });
 
 // Автоматическое обновление токена при 401
-api.interceptors.response.use(null, async (error) => {
-  if (error.response?.status === 401) {
+let isRefreshing = false;
+let failedRequestsQueue = [];
+
+api.interceptors.response.use(response => response, async (error) => {
+  const originalRequest = error.config;
+
+  // Если получили 401, пытаемся обновить токен
+  if (error.response?.status === 401 && !originalRequest._retry) {
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedRequestsQueue.push({ resolve, reject });
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
     try {
       const newAccessToken = await AuthService.refreshAccessToken();
-      error.config.headers['Authorization'] = `Bearer ${newAccessToken}`;
-      return axios.request(error.config);
+
+      // Сохранение нового токена
+      try {
+        localStorage.setItem('accessToken', newAccessToken);
+      } catch (err) {
+        console.error('Ошибка записи в localStorage:', err);
+      }
+
+      api.defaults.headers['Authorization'] = `Bearer ${newAccessToken}`;
+
+      // Повторяем все запросы из очереди
+      failedRequestsQueue.forEach((callback) => callback.resolve(newAccessToken));
+      failedRequestsQueue = [];
+
+      return api(originalRequest);
     } catch (err) {
+      console.error('Ошибка обновления токена:', err);
+      failedRequestsQueue.forEach((callback) => callback.reject(err));
+
       AuthService.logout();
-      window.location = '/';
+      window.location.href = '/';
+    } finally {
+      isRefreshing = false;
     }
   }
+
+  // Если получили 403, сразу разлогиниваем пользователя
+  if (error.response?.status === 403) {
+    AuthService.logout();
+    window.location.href = '/';
+  }
+
   return Promise.reject(error);
 });
 

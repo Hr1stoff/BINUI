@@ -1,0 +1,195 @@
+.create-row {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.create-row__wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 1500px;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.create-row__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.create-row__title {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.create-row__select {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 200;
+    font-size: 24px;
+    width: 235px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+}
+
+.create-row__option {}
+
+.create-row__buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.create-row__content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.create-row__btn {
+    width: 150px;
+    height: 40px;
+    border: 1px solid #000;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.create-row__btn_send:hover {
+    background-color: #A7CEA7;
+    transition: 0.1s linear;
+    border: 1px solid #ccc;
+    color: #fff;
+}
+
+.create-row__btn_close:hover,.create-row__btn_remove:hover {
+    background-color: #D9262A;
+    transition: 0.1s linear;
+    border: 1px solid #ccc;
+    color: #fff;
+}
+
+
+.create-row__form {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #000;
+    padding: 15px;
+}
+
+.create-row__wrap {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.create-row__row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.create-row__form-title {
+    min-width: 125px;
+    padding: 5px 10px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: none;
+}
+
+.create-row__form-select {
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    width: 250px;
+
+    border: none;
+    outline: none;
+    cursor: pointer;
+
+    border: 1px solid #ccc;
+
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.create-row__option {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+}
+
+.create-row__checkbox-wrapper {
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+}
+
+.create-row__checkbox-wrap {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.create-row__checkbox {
+    width: 20px;
+    accent-color: #A7CEA7;
+}
+
+.create-row__inputs {
+    display: flex;
+    padding: 10px;
+}
+
+.create-row__attr-title {
+    padding: 5px 10px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: none;
+}
+
+.create-row__input {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    border: 1px solid #000;
+    padding: 5px;
+}
+
+.create-row__button-add-row {
+    display: flex;
+    align-items: center;
+}
+
+.create-row__btn_add-row {
+    font-size: 25px;
+    font-weight: 400;
+}
+
+.create-row__btn_add-row:hover {
+    background-color: #A7CEA7;
+    transition: 0.1s linear;
+    border: 1px solid #ccc;
+    color: #fff
+}

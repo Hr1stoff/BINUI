@@ -3,14 +3,17 @@
         <div class="header__wrapper">
             <div class="header__selecting">
                 <div class="header__title"><span class="header__name">Выбрать таблицу</span></div>
-                <div class="header__table"><select class="header__select" v-model="selectedTable">
+                <div class="header__table">
+                    <select class="header__select" v-model="selectedTableChild">
                         <option v-for="(table, index) in tables" :key="index" :value="table" class="header__option">
                             {{ table }}
                         </option>
-                    </select></div>
+                    </select>
+                </div>
             </div>
             <div class="header__buttons">
-                <button class="header__btn header__btn_add-row" @click="$emit('openAddRow')">Добавить</button>
+                <button class="header__btn header__btn_add-row" @click="$emit('openAddRow')"
+                    v-if="role != 'user'">Добавить</button>
                 <button class="header__btn header__refresh" @click="$emit('refreshData')">Обновить таблицу</button>
                 <button @click="exit" class="header__btn header__signout">Выход</button>
             </div>
@@ -24,33 +27,52 @@ export default {
         tables: {
             type: Array,
             required: true
+        },
+        selectedTable: {
+            type: String,
+            default: ""
+        }, role: {
+            type: String
         }
     },
     data() {
         return {
-            selectedTable: ""
-        }
+            selectedTableChild: ""
+        };
+    },
+    mounted() {
+        this.preloadSelectedTable();
     },
     methods: {
         exit() {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             this.$router.push("/");
+        },
+        preloadSelectedTable() {
+            if (this.tables.length > 0) {
+                this.selectedTableChild = this.selectedTable || this.tables[0];
+                this.$emit("tableSelected", this.selectedTableChild);
+            }
         }
     },
     watch: {
-        selectedTable(table) {
-            this.$emit('tableSelected', table);
-        }
-    },
-    mounted() {
-        if (this.tables.length > 0) {
-            this.selectedTable = this.tables[0];
-
+        selectedTableChild(newVal) {
+            this.$emit("tableSelected", newVal);
+        },
+        tables: {
+            handler(newTables) {
+                if (newTables.length > 0 && !this.selectedTableChild) {
+                    this.selectedTableChild = this.selectedTable || newTables[0];
+                    this.$emit("tableSelected", this.selectedTableChild);
+                }
+            },
+            immediate: true
         }
     }
-}
+};
 </script>
+
 
 <style>
 .header {
@@ -70,6 +92,7 @@ export default {
 .header__selecting {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .header__title {}
@@ -77,22 +100,23 @@ export default {
 .header__name {
     font-family: 'Open Sans', sans-serif;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 20px;
     color: #fff;
 }
 
 .header__select {
     font-family: 'Open Sans', sans-serif;
     font-weight: 200;
-    font-size: 16px;
+    font-size: 20px;
     width: 235px;
+    height: 35px;
     background-color: #fff;
 }
 
 .header__option {
     font-family: 'Open Sans', sans-serif;
     font-weight: 200;
-    font-size: 16px;
+    font-size: 20px;
 }
 
 .header__buttons {
@@ -103,7 +127,7 @@ export default {
 
 .header__btn {
     padding: 0 10px;
-    height: 32px;
+    height: 35px;
     background-color: #4DA2E7;
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;

@@ -1,9 +1,16 @@
 <template>
+    <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
+        :duration="3000" />
     <div class="table">
-        <!-- После поиска  -->
+        <!-- Поиск и фильтр  -->
         <div class="table__search">
             <input type="text" v-model="searchQuery" placeholder="Введите текст для поиска" class="table__search-input">
+            <Filter :selectedTable="selectedTable" :headers="headers" />
+
         </div>
+        <!-- Preload при загрузке данных -->
+        <Preload v-if="isLoading && showEmptyMessage" />
+
 
         <!-- Отображение таблицы -->
         <table class="table__wrapper" v-if="filterData.length > 0 && headers.length > 0">
@@ -20,64 +27,50 @@
                     </td>
                     <td class="table__wrap-btn">
                         <div class="table__buttons">
-                            <button class="table__btn table__btn_change" @click="openEditWindow(row)">
+                            <!-- Добавить скрыть для user и для таблице логи -->
+                            <button class="table__btn table__btn_change" @click="openEditWindow(row)"
+                                v-if="!['logs', 'open_in_systems', 'users', 'access_rights_attr'].includes(selectedTable) && role != 'user'">
                                 Изменить</button>
-                            <button class="table__btn table__btn_delete" @click="onDeleteRow(row.id)">Удалить</button>
+                            <button class="table__btn table__btn_delete" @click="onDeleteRow(row.id)"
+                                v-if="!['logs', 'open_in_systems', 'users', 'access_rights_attr', 'access_rights'].includes(selectedTable) && role != 'user'">Удалить</button>
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- Preload для ожидания ответа из бд -->
-        <Preload v-if="isLoading" />
-        <!-- Если таблица пустая  -->
-        <div class="table__wrapper table__wrapper_empty" v-else-if="!isLoading && data.length === 0">
+        <!-- Сообщение, если таблица пустая -->
+        <div class="table__wrapper table__wrapper_empty" v-else-if="showEmptyMessage">
             <h1 class="table__explanation">
-                Данная таблица <span>
-                    {{ selectedTable }}
-                </span> пустая
+                Данная таблица <span>{{ selectedTable }}</span> пустая
+            </h1>
+        </div>
+        <!-- Если поиск не нашел ничего -->
+        <div class="table__wrapper table__wrapper_empty" v-else-if="searchNotFound">
+            <h1 class="table__explanation">
+                По запросу "<span>{{ searchQuery }}</span>" ничего не найдено
             </h1>
         </div>
     </div>
-    <!-- Модально окно по измнению строки -->
-    <div class="table__modal" v-if="modalShow">
-        <div class="table__modal-content">
-            <h3 class="table__modal-title">
-                Редактирование строки
-            </h3>
-            <form class="table__modal-form" @submit.prevent="sendEdit">
-                <div class="table__modal-field" v-for="(value, key) in editableRow" :key="key">
-                    <label class="table__modal-label">{{ key }}:</label>
 
-                    <select v-if="key === 'user_type'" v-model="editableRow[key]" class="table__modal-input">
-                        <option v-for="option in userTypeOptions" :key="option" :value="option">{{ option }}
-                        </option>
-                    </select>
-                    <select v-else-if="allSystems.includes(key)" v-model="editableRow[key]" class="table__modal-input">
-                        <option :value="0">0</option>
-                        <option :value="1">1</option>
-                    </select>
+    <!-- Компонент для измненения строк -->
+    <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :editableRow="editableRow"
+        :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" />
 
-                    <textarea v-else v-model="editableRow[key]" class="table__modal-input" rows="1"
-                        :readonly="key === 'id'">
-                        </textarea>
-                </div>
-                <div class="table__modal-buttons">
-                    <button class="table__modal-btn table__modal-btn_safe">Сохранить</button>
-                    <button type="button" class="table__modal-btn table__modal-btn_cancel"
-                        @click="closeEditWindow">Отменить</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
+
 </template>
 
 <script>
 import Preload from '@/components/Preload.vue';
+import Notification from '@/components/Notification.vue';
+import ChangeRow from '@/components/ChangeRow/ChangeRow.vue';
+import Filter from '@/components/Filter/Filter.vue';
 import api from '@/services/api';
+
+
 export default {
-    emits: ["deleteRow"],
+    emits: ["deleteRow", 'openEditWindow', 'closeEditWindow', 'errorMessage'],
     props: {
         data: {
             type: Array,
@@ -93,33 +86,52 @@ export default {
         allSystems: {
             type: Array,
             required: true
+        },
+        role: {
+            type: String
         }
     },
     data() {
         return {
+            localData: this.data,
+            editableRow: {},
             searchQuery: '',
-            isLoading: true,
+            showEmptyMessage: false,
+            searchNotFound: false,
             deletingRow: null,
-            modalShow: false,
-            editableRow: null,
+            showEditModal: false,
             newRow: null,
             token: localStorage.getItem('accessToken'),
             userTypeOptions: null,
             oldRow: null,
-
+            activateNotification: false,
+            notificationMessage: '',
+            notificationType: 'info',
+            isLoading: true,
+            showEmptyMessage: false,
         }
     },
     computed: {
-        // Поиск в таблице
         filterData() {
             if (!this.searchQuery) {
+                this.showEmptyMessage = this.data.length === 0;
+                this.searchNotFound = false; // Сбрасываем поиск
                 return this.data;
             }
+
             const lowerQuery = this.searchQuery.toLowerCase();
-            return this.data.filter(row => Object.values(row).some(value => String(value).toLowerCase().includes(lowerQuery)))
+            const filtered = this.localData.filter(row =>
+                Object.values(row).some(value => String(value).toLowerCase().includes(lowerQuery))
+            );
+
+            this.showEmptyMessage = false;
+            this.searchNotFound = filtered.length === 0;
+
+            return filtered;
         },
-    }, components: {
-        Preload
+    },
+    components: {
+        Preload, Notification, ChangeRow, Filter
     },
     mounted() {
         this.fetchUserTypeOptions();
@@ -129,8 +141,19 @@ export default {
             handler(newData) {
                 if (newData.length > 0) {
                     this.isLoading = false;
-                } else if (!this.isLoading) {
-                    this.isLoading = false;
+                    this.showEmptyMessage = false;
+                    clearTimeout(this.timeout);
+                } else {
+                    this.isLoading = true;
+                    this.showEmptyMessage = false;
+
+
+                    this.timeout = setTimeout(() => {
+                        if (this.data.length === 0) {
+                            this.showEmptyMessage = true;
+                            this.isLoading = false;
+                        }
+                    }, 4000);
                 }
             },
             immediate: true
@@ -140,102 +163,162 @@ export default {
         // Открытие модального окна для измнение строки
         openEditWindow(row) {
             this.editableRow = { ...row };
-            this.modalShow = true;
+            this.showEditModal = true;
         },
         // Закрытие модального окна для измнение строки
         closeEditWindow() {
-            this.modalShow = false;
+            this.showEditModal = false;
             this.editableRow = {};
         },
         // Отправка обновленной строки
-        sendEdit() {
-            // Получение старых данных строки
-            this.oldRow = this.data.find(row => row.id === this.editableRow.id);
-            // Функция определения в какой таблице поменялась строка
-            // Также обновлись ли данные или нет 
-            const checkUpdate = (nameTable, editableRow) => {
-                if (!this.oldRow) return null;
+        async sendEdit(row) {
+            if (this.selectedTable === 'access_rights') {
+                for (const key of Object.keys(row)) {
+                    if (key === 'user_type') {
+                        try {
+                            const response = await api.patch('/access_rights/user_type',
+                                {
+                                    departmentName: row.department_name,
+                                    positionName: row.position_name,
+                                    user_type: row.user_type
+                                },
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${this.token}`
+                                    },
 
-                if (nameTable == 'access_rights') {
-                    const result = {
-                        id: this.oldRow.id,
-                        department_id: this.oldRow.department_id,
-                        position_id: this.oldRow.position_id,
-                        openForSystem: [],
-                        closeForSystem: []
-                    };
-                    let hasChanges = false;
-                    for (const key in editableRow) {
-                        if (editableRow.hasOwnProperty(key) && this.oldRow[key] !== editableRow[key]) {
-                            if (this.allSystems.includes(key)) {
-
-                                if (editableRow[key] === 1) {
-                                    result.openForSystem.push(key);
-                                } else if (editableRow[key] === 0) {
-                                    result.closeForSystem.push(key);
                                 }
-                            } else {
+                            );
+                            if (response.status === 200) {
+                                this.notificationMessage = response.data.message;
+                                this.notificationType = 'success';
+                                this.activateNotification = true;
 
-                                result[key] = editableRow[key];
+                                setTimeout(() => {
+                                    this.activateNotification = false;
+                                }, 3000);
                             }
-                            hasChanges = true;
+                        } catch (err) {
+                            this.notificationMessage = err.response.data.message;
+                            this.notificationType = 'error';
+                            this.activateNotification = true;
+
+                            setTimeout(() => {
+                                this.activateNotification = false;
+                            }, 3000);
+                        }
+                    }
+                    else {
+                        this.oldRow = this.data.find(row => row.id === this.editableRow.id);
+                        const checkUpdate = (nameTable, editableRow) => {
+                            if (!this.oldRow) return null;
+
+                            if (nameTable == 'access_rights') {
+                                const result = {
+                                    id: this.oldRow.id,
+                                    department_id: this.oldRow.department_id,
+                                    position_id: this.oldRow.position_id,
+                                    openForSystem: [],
+                                    closeForSystem: []
+                                };
+                                let hasChanges = false;
+                                for (const key in editableRow) {
+                                    if (editableRow.hasOwnProperty(key) && this.oldRow[key] !== editableRow[key]) {
+                                        if (this.allSystems.includes(key)) {
+
+                                            if (editableRow[key] === 1) {
+                                                result.openForSystem.push(key);
+                                            } else if (editableRow[key] === 0) {
+                                                result.closeForSystem.push(key);
+                                            }
+                                        } else {
+
+                                            result[key] = editableRow[key];
+                                        }
+                                        hasChanges = true;
+                                    }
+                                }
+
+                                return hasChanges ? result : null;
+                            } else {
+                                const checkForUpdate = (oldCheckRow, editableRow) =>
+                                    JSON.stringify(oldCheckRow) !== JSON.stringify(editableRow) ? editableRow : null;
+                                return checkForUpdate(this.oldRow, editableRow);
+                            }
+                        };
+                        const updatedRow = checkUpdate(this.selectedTable, this.editableRow);
+
+                        try {
+                            const response = await api.post('/access_rights',
+                                {
+                                    department_id: formData.department_id,
+                                    position_id: formData.position_id,
+                                    systems: formData.systems,
+                                    user_type: formData.user_type
+                                },
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${this.token}`
+                                    }
+                                }
+                            );
+                            if (response.status === 200) {
+                                this.notificationMessage = response.data.message;
+                                this.notificationType = 'info';
+                                this.activateNotification = true;
+
+                                setTimeout(() => {
+                                    this.activateNotification = false;
+                                }, 3000);
+                            }
+                            if (response.status === 201) {
+                                this.notificationMessage = response.data.message;
+                                this.notificationType = 'success';
+                                this.activateNotification = true;
+
+                                setTimeout(() => {
+                                    this.activateNotification = false;
+                                }, 3000);
+                            }
+                        } catch (err) {
+                            this.notificationMessage = err.response.data.message;
+                            this.notificationType = 'error';
+                            this.activateNotification = true;
+
+                            setTimeout(() => {
+                                this.activateNotification = false;
+                            }, 3000);
                         }
                     }
 
-                    return hasChanges ? result : null;
-                } else {
-                    const checkForUpdate = (oldCheckRow, editableRow) =>
-                        JSON.stringify(oldCheckRow) !== JSON.stringify(editableRow) ? editableRow : null;
-                    return checkForUpdate(this.oldRow, editableRow);
-                }
-            };
-
-            const updatedRow = checkUpdate(this.selectedTable, this.editableRow);
-
-            // ПОМЕНЯТЬ НА ОТДЕЛЬНОЕ ОКНО УВЕДОМЛЕНИЯ
-            if (!updatedRow) {
-                alert('Вы ничего не поменяли!');
-                return;
-            }
-
-            this.newRow = updatedRow;
-            // отправка данных
-            if (this.newRow) {
-                try {
-                    const response = api.patch('/update/changeRow',
-                        {
-                            nameTable: this.selectedTable,
-                            oldRow: this.oldRow,
-                            editRow: this.newRow
-                        },
-                        {
-                            headers: {
-                                Authorization: `Bearer ${this.token}`
-                            }
-                        });
-                    console.log('Ответ от сервера:', response.data);
-                } catch (err) {
-                    alert(err, 'Ошибка при сохранении изменений.');
                 }
             }
         },
         // Функция для получения какого типа должна быть строка user_type в access_right
         async fetchUserTypeOptions() {
             try {
-                const response = await api.get('/userType/getUserTypeOptions', {
+                const response = await api.get('/tables/getUserTypeOptions', {
                     headers: {
                         Authorization: `Bearer ${this.token}`
                     }
                 });
-                this.userTypeOptions = response.data.userTypeOptions;
+                this.userTypeOptions = response.data.data;
             }
             catch (error) {
                 console.error('Ошибка при загрузке userTypeOptions:', error);
             }
         },
         onDeleteRow(rowId) {
-            this.$emit("deleteRow", rowId); // Генерация пользовательского события
+            this.$emit("deleteRow", rowId);
         },
+        delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        },
+    },
+    provide() {
+        return{
+            localData: this.localData
+        }
     }
 
 }
@@ -258,6 +341,10 @@ export default {
 
 .table__search {
     width: 500px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
 }
 
 .table__search-input {
@@ -365,100 +452,5 @@ export default {
     font-size: 32px;
     font-weight: 700;
     font-style: italic;
-}
-
-.table__modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.table__modal-content {
-    padding: 20px;
-    border-radius: 5px;
-    background-color: #fff;
-}
-
-.table__modal-form {
-    display: flex;
-    gap: 10px;
-}
-
-.table__modal-title {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    padding: 15px 0px;
-}
-
-.table__modal-field {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.table__modal-label {
-    border: 1px solid #000;
-    padding: 5px 10px;
-    font-family: 'Open Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 800;
-    cursor: none;
-}
-
-.table__modal-input {
-    width: 100%;
-    box-sizing: border-box;
-    resize: none;
-    overflow: hidden;
-    font-family: 'Open Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-    padding: 10px;
-    line-height: 1.5;
-    min-height: 100px;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    border: 1px solid #000;
-}
-
-.table__modal-buttons {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-}
-
-.table__modal-btn {
-    width: 150px;
-    height: 40px;
-    border: 1px solid #000;
-
-    font-family: 'Open Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-}
-
-.table__modal-btn_safe:hover {
-    background-color: #A7CEA7;
-    transition: 0.1s linear;
-    border: 1px solid #ccc;
-    color: #fff;
-}
-
-.table__modal-btn_cancel:hover {
-    background-color: #D9262A;
-    transition: 0.1s linear;
-    border: 1px solid #ccc;
-    color: #fff;
 }
 </style>

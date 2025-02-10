@@ -9,8 +9,9 @@ const routes = [
     name: 'Login',
     component: Login,
     beforeEnter: (to, from, next) => {
+      console.log('🔍 Проверка перед входом в систему...');
       if (isAuthenticated()) {
-
+        console.log('🟢 Пользователь уже авторизован, перенаправляем в кабинет.');
         next('/cabinet');
       } else {
         next();
@@ -23,11 +24,10 @@ const routes = [
     component: Cabinet,
     meta: { requiresAuth: true },
   },
-
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(),
   routes,
 });
 
@@ -35,24 +35,35 @@ const router = createRouter({
 function isAuthenticated() {
   const token = localStorage.getItem('accessToken');
   if (!token) {
-    console.log('Токен отсутствует');
+    console.log('🔴 Нет accessToken в localStorage');
     return false;
   }
 
   try {
     const decoded = jwtDecode(token);
     const now = Date.now() / 1000;
-    return decoded.exp > now;
+
+    if (decoded.exp > now) {
+      console.log('🟢 Токен действителен');
+      return true;
+    } else {
+      console.warn('🟠 Токен истек');
+      localStorage.removeItem('accessToken'); // Удаляем просроченный токен
+      return false;
+    }
   } catch (error) {
-    console.error('Ошибка проверки токена:', error);
+    console.error('🔴 Ошибка при декодировании токена:', error);
     return false;
   }
 }
 
+// Глобальный перехватчик маршрутов
 router.beforeEach((to, from, next) => {
+  console.log(`🚀 Навигация: ${from.path} → ${to.path}`);
 
   if (to.meta.requiresAuth) {
     if (!isAuthenticated()) {
+      console.warn('🔴 Пользователь не авторизован. Перенаправляем на страницу входа.');
       next('/');
     } else {
       next();
