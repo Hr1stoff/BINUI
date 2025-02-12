@@ -16,23 +16,29 @@
         <table class="table__wrapper" v-if="filterData.length > 0 && headers.length > 0">
             <thead class="table__head">
                 <tr class="table__row">
-                    <th class="table__cell table__cell_header" v-for="(header, index) in headers" :key="index">{{
-                        header }}</th>
+                    <th class="table__cell table__cell_header" v-for="(header, index) in headers" :key="index">
+                        {{ header }}
+                    </th>
+                    <th class="table__cell table__cell_header table__cell_actions">Действия</th>
                 </tr>
             </thead>
             <tbody class="table__body">
                 <tr class="table__row" v-for="row in filterData" :key="row.id">
-                    <td class="table__cell" v-for="(cell, key) in row" :key="key"><span class="table__title">{{
-                        cell }}</span>
+                    <td class="table__cell" v-for="(cell, key) in row" :key="key">
+                        <span class="table__title">{{ cell }}</span>
                     </td>
                     <td class="table__wrap-btn">
                         <div class="table__buttons">
-                            <!-- Добавить скрыть для user и для таблице логи -->
                             <button class="table__btn table__btn_change" @click="openEditWindow(row)"
-                                v-if="!['logs', 'open_in_systems', 'users', 'access_rights_attr'].includes(selectedTable) && role != 'user'">
-                                Изменить</button>
+                                v-if="!isRestrictedTable(selectedTable) && role !== 'user'"
+                                aria-label="Изменить запись">
+                                Изменить
+                            </button>
                             <button class="table__btn table__btn_delete" @click="onDeleteRow(row.id)"
-                                v-if="!['logs', 'open_in_systems', 'users', 'access_rights_attr', 'access_rights'].includes(selectedTable) && role != 'user'">Удалить</button>
+                                v-if="!isRestrictedTable(selectedTable, true) && role !== 'user'"
+                                aria-label="Удалить запись">
+                                Удалить
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -52,7 +58,6 @@
             </h1>
         </div>
     </div>
-
     <!-- Компонент для измненения строк -->
     <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :editableRow="editableRow"
         :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" />
@@ -67,7 +72,7 @@ import Notification from '@/components/Notification.vue';
 import ChangeRow from '@/components/ChangeRow/ChangeRow.vue';
 import Filter from '@/components/Filter/Filter.vue';
 import api from '@/services/api';
-
+import { ref, nextTick } from "vue";
 
 export default {
     emits: ["deleteRow", 'openEditWindow', 'closeEditWindow', 'errorMessage'],
@@ -160,6 +165,11 @@ export default {
         }
     },
     methods: {
+        isRestrictedTable(table, includeAccessRights = false) {
+            const restrictedTables = ['logs', 'open_in_systems', 'users', 'access_rights_attr'];
+            if (includeAccessRights) restrictedTables.push('access_rights');
+            return restrictedTables.includes(table);
+        },
         // Открытие модального окна для измнение строки
         openEditWindow(row) {
             this.editableRow = { ...row };
@@ -316,7 +326,7 @@ export default {
         },
     },
     provide() {
-        return{
+        return {
             localData: this.localData
         }
     }
@@ -327,12 +337,12 @@ export default {
 <style>
 .table {
     margin: 15px 0;
-    background-color: #A7CEA7;
+    background-color: #D9D9D9;
     padding: 15px 30px;
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
     height: 100%;
-
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -344,7 +354,6 @@ export default {
     display: flex;
     align-items: center;
     gap: 15px;
-
 }
 
 .table__search-input {
@@ -352,6 +361,7 @@ export default {
     font-family: 'Open Sans', sans-serif;
     font-weight: 200;
     font-size: 16px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 
     padding: 8px;
     background-color: #fff;
@@ -359,32 +369,54 @@ export default {
 
 .table__wrapper {
     width: 100%;
+    border-collapse: collapse;
+    background: #FFFFFF;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table__head {
+    background-color: #0099CC;
+    color: white;
+    font-weight: bold;
+    text-align: left;
+}
+
+.table__cell_actions {
+    width: 500px;
+    padding: 0 10px;
+    text-align: center;
 }
 
 .table__cell {
     word-wrap: break-word;
-
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 120px;
-
-    color: #000;
+    color: #002B5B;
     padding: 8px 5px;
-
-
     text-align: center;
     background-color: #fff;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     font-family: 'Open Sans', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 400;
+    box-shadow: none;
+}
+
+
+.table__cell_header {
+    font-weight: 700;
+    background-color: #f5f5f5;
+    border-bottom: 2px solid #ccc;
 }
 
 .table__title {
     font-family: 'Open Sans', sans-serif;
     font-size: 14px;
     font-weight: 400;
-    color: #000;
+    color: #002B5B;
 }
 
 .table__cell_header {
@@ -394,6 +426,8 @@ export default {
 .table__wrap-btn {
     display: flex;
     max-width: 200px;
+    justify-content: center;
+    align-items: center;
 }
 
 .table__buttons {
@@ -414,21 +448,21 @@ export default {
     font-family: 'Open Sans', sans-serif;
     font-size: 16px;
     font-weight: 400;
-    color: #000;
+    color: #002B5B;
     cursor: pointer;
 }
 
 .table__btn:hover {
     border: 1px solid #fff;
-    background-color: #A7CEA7;
-    transition: 0.1s linear;
+    background-color: #FFA500;
+    transition: 0.3s;
     color: #fff;
 
 }
 
 .table__btn_delete:hover {
     border: 1px solid #fff;
-    background-color: #D9262A;
+    background-color: #CC3333;
     transition: 0.1s linear;
     color: #fff;
 }
@@ -445,6 +479,7 @@ export default {
     font-family: 'Open Sans', sans-serif;
     font-size: 32px;
     font-weight: 700;
+    color: #002B5B;
 }
 
 .table__explanation>span {
@@ -452,5 +487,6 @@ export default {
     font-size: 32px;
     font-weight: 700;
     font-style: italic;
+    color: #002B5B;
 }
 </style>

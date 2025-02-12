@@ -138,7 +138,7 @@ export default {
             this.formData = this.$refs.formComponent.getFormData();
 
             if (this.chosenNameTable === 'access_rights') {
-                this.handleFormAccessSubmit(formData);
+                this.handleFormAccessSubmit(this.formData);
             } else if (['departments', 'position', 'systems'].includes(this.chosenNameTable)) {
                 this.handleFormOtherSubmit();
             } else if (this.chosenNameTable === 'system_attributes') {

@@ -66,7 +66,7 @@ export default {
     padding: 0 10px;
     /* width: 100px; */
     height: 35px;
-    background-color: #4DA2E7;
+    background-color: #0099CC;
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 16px;
@@ -75,9 +75,8 @@ export default {
 }
 
 .table__filter-btn:hover {
-    color: #000;
-    background-color: #fff;
-    transition: 0.2s linear;
+    background-color: #0077AA;
+    transition: 0.3s;
 }
 
 .table__filter-wrap {

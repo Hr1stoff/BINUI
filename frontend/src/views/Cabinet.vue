@@ -20,7 +20,13 @@
         <!-- Компонент для создания новых строк -->
         <CreateRow v-if="showAddRow" :selectedTable="selectedTable" :localTables="tables"
             @closeCreateWindow="onCloseCreateWindow" />
+
+        <!-- Кнопка для прокрутки -->
+        <button v-if="showScrollButton && !showAddRow" class="scroll-button" @click="scrollToBottom">
+            {{ isAtBottom ? "↑" : "↓" }}
+        </button>
     </div>
+
 </template>
 
 <script>
@@ -51,7 +57,9 @@ export default {
             notificationMessage: '',
             notificationType: 'info',
             showConfirmWindow: false,
-            rowToDelete: null
+            rowToDelete: null,
+            isAtBottom: false, // Переменная для проверки, находится ли пользователь внизу
+            showScrollButton: false // Отображение кнопки скролла
         };
     },
     async beforeRouteEnter(to, from, next) {
@@ -64,6 +72,7 @@ export default {
             this.loadData();
         };
         this.getTableData();
+        window.addEventListener('scroll', this.handleScroll);
     },
     components: {
         Header,
@@ -73,7 +82,27 @@ export default {
         Notification,
         ConfirmationDialog
     },
+    beforeUnmount() {
+        window.removeEventListener('scroll', this.handleScroll);
+    },
     methods: {
+        // Метод для обработки скролла и определения положения страницы
+        handleScroll() {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const clientHeight = document.documentElement.clientHeight;
+            const scrollHeight = document.documentElement.scrollHeight;
+
+            this.isAtBottom = scrollTop + clientHeight >= scrollHeight - 5;
+            this.showScrollButton = scrollHeight > clientHeight + 100;
+        },
+        // Метод для скролла вниз/вверх
+        scrollToBottom() {
+            if (this.isAtBottom) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+            }
+        },
         delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         },
@@ -132,7 +161,7 @@ export default {
                 }
 
             } catch (err) {
-                this.notificationMessage = err;
+                this.notificationMessage = err instanceof Error ? err.message : String(err);
                 this.notificationType = 'error';
                 this.activateNotification = true;
 
@@ -140,6 +169,7 @@ export default {
                     this.activateNotification = false;
                 }, 3000);
             }
+
         },
         //обновленние данных
         async loadData() {
@@ -220,15 +250,41 @@ export default {
                         this.activateNotification = false;
                     }, 3000);
 
+                    this.showConfirmWindow = false;
+                    await this.getTableData();
                 }
-                this.showConfirmWindow = false;
-                await this.getTableData();
             } catch (err) {
-                this.handleError(err, 'Ошибка при удалении строки');
+                if (err.response) {
+                    const { status, data } = err.response;
+
+                    if (status === 404) {
+                        this.notificationMessage = `Ошибка: Запись ${this.rowToDelete} не найдена.`;
+                    } else if (status === 400) {
+                        this.notificationMessage = data.message || 'Ошибка: Удаление невозможно из-за зависимостей.';
+                    } else if (status === 500) {
+                        this.notificationMessage = 'Серверная ошибка при удалении. Попробуйте позже.';
+                    } else {
+                        this.notificationMessage = `Ошибка: ${data.message || 'Неизвестная ошибка'}`;
+                    }
+                } else {
+                    this.notificationMessage = 'Ошибка соединения с сервером.';
+                }
+
+                this.notificationType = 'error';
+                this.activateNotification = true;
+
+                setTimeout(() => {
+                    this.activateNotification = false;
+                }, 5000);
+                setTimeout(() => {
+                    this.showConfirmWindow = false;
+                    this.getTableData();
+                }, 2000);
             } finally {
                 this.rowToDelete = null;
             }
-        },
+        }
+        ,
         // открытие модульного окна для создания новых данных
         openAddRow() {
             this.showAddRow = true
@@ -263,5 +319,24 @@ export default {
     align-items: center;
     height: 100vh;
     width: 100%;
+}
+
+.scroll-button {
+    position: fixed;
+    bottom: 30px;
+    background-color: #0077AA;
+    right: 35px;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.3s;
+    z-index: 1000;
+    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.scroll-button:hover {
+    background-color: #0056b3;
 }
 </style>

@@ -97,29 +97,52 @@ router.delete('/:id', authenticateToken, checkDatabasePrivileges, async (req, re
     const { host, user, password } = req.user;
     const { id } = req.params;
     let connection;
+
     try {
         connection = await createConnection({ host, user, password });
-        const query = `DELETE FROM departments WHERE id = ?`;
 
+        // Проверяем, существует ли запись в departments
         const [rows] = await connection.query('SELECT * FROM departments WHERE id = ?', [id]);
-        const oldValue = rows.length ? rows[0] : null;
-        if (!oldValue) {
+        if (rows.length === 0) {
             return res.status(404).json({ message: `Отдел с ID ${id} не найден` });
         }
+        const oldValue = rows[0];
 
-        const [result] = await connection.query(query, [id]);
+        // Проверяем зависимые записи (если есть связанные данные)
+        const [dependencies] = await connection.query(`
+            SELECT COUNT(*) AS count FROM access_rights WHERE department_id = ?`, [id]
+        );
+        if (dependencies[0].count > 0) {
+            return res.status(400).json({ 
+                message: `Невозможно удалить отдел ${id}, так как на него ссылаются другие записи. Удалите зависимые записи сначала.` 
+            });
+        }
 
+        // Удаляем запись
+        const [result] = await connection.query('DELETE FROM departments WHERE id = ?', [id]);
+
+        // Логируем удаление
         await logAction('DELETE', 'departments', id, null, null, JSON.stringify(oldValue), 'good');
 
-        res.status(200).json({ message: `Запись с ID ${id} удалена`, affectedRows: result.affectedRows });
+        res.status(200).json({ 
+            message: `Запись с ID ${id} удалена`, 
+            affectedRows: result.affectedRows 
+        });
     }
     catch (err) {
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(400).json({ 
+                message: `Ошибка: Невозможно удалить отдел ${id}, так как он связан с другими таблицами.`,
+                error: err.message
+            });
+        }
         res.status(500).json({ message: `Ошибка при удалении отдела ${id}`, error: err.message });
     }
     finally {
         if (connection) await connection.end();
     }
 });
+
 
 
 module.exports = router;

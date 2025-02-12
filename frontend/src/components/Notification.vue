@@ -56,15 +56,15 @@ watchEffect(() => {
 }
 
 .success {
-    background-color: #A7CEA7;
+    background-color: #0077AA;
 }
 
 .error {
-    background-color: #E24C51;
+    background-color: #CC3333;
 }
 
 .warning {
-    background-color: #ff9800;
+    background-color: #FF6600;
 }
 
 .info {

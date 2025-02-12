@@ -3,14 +3,23 @@ html {
     box-sizing: border-box;
 }
 
-#app{
+html,
+body {
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+
+
+#app {
     display: flex !important;
     height: 100% !important;
     flex-direction: column !important;
 }
 
-main{
-    flex-shrink: 0 !important;  
+main {
+    flex-shrink: 0 !important;
 }
 
 *,
@@ -65,7 +74,7 @@ aside,
 nav,
 footer,
 header,
-section{
+section {
     display: block;
 }
 

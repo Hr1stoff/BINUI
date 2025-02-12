@@ -93,17 +93,35 @@ router.delete('/:id', authenticateToken, checkDatabasePrivileges, async (req, re
     const { host, user, password } = req.user;
     const { id } = req.params;
     let connection;
+
     try {
         connection = await createConnection({ host, user, password });
-        const query = `DELETE FROM position WHERE id = ?`;
 
         const [oldValue] = await connection.query('SELECT * FROM position WHERE id = ?', [id]);
+        if (oldValue.length === 0) {
+            return res.status(404).json({ message: `Должность с ID ${id} не найдена` });
+        }
 
-        const [result] = await connection.query(query, [id]);
-        await logAction('DELETE', 'position', result.insertId, null, null, JSON.stringify(oldValue), 'good');
-        res.status(200).json({ message: `Запись ${id} удалена` });
+        const [dependencies] = await connection.query('SELECT COUNT(*) AS count FROM access_rights WHERE position_id = ?', [id]);
+        if (dependencies[0].count > 0) {
+            return res.status(400).json({ 
+                message: `Невозможно удалить должность ${id}, так как на неё ссылаются записи в access_rights. Удалите зависимые записи сначала.` 
+            });
+        }
+
+        await connection.query('DELETE FROM position WHERE id = ?', [id]);
+
+        await logAction('DELETE', 'position', id, null, null, JSON.stringify(oldValue[0]), 'good');
+
+        res.status(200).json({ message: `Должность ${id} успешно удалена` });
     }
     catch (err) {
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(400).json({ 
+                message: `Ошибка: Должность ${id} не может быть удалена, так как есть связанные записи.`,
+                error: err.message
+            });
+        }
         res.status(500).json({ message: `Ошибка при удалении должности ${id}`, error: err.message });
     }
     finally {

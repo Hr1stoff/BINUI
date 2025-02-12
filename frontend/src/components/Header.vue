@@ -80,7 +80,7 @@ export default {
 }
 
 .header__wrapper {
-    background-color: #A7CEA7;
+    background-color: #D9D9D9;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -101,7 +101,7 @@ export default {
     font-family: 'Open Sans', sans-serif;
     font-weight: bold;
     font-size: 20px;
-    color: #fff;
+    color: #002B5B;
 }
 
 .header__select {
@@ -111,6 +111,7 @@ export default {
     width: 235px;
     height: 35px;
     background-color: #fff;
+    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
 }
 
 .header__option {
@@ -128,7 +129,7 @@ export default {
 .header__btn {
     padding: 0 10px;
     height: 35px;
-    background-color: #4DA2E7;
+    background-color: #0099CC;
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 16px;
@@ -137,19 +138,14 @@ export default {
 }
 
 .header__signout:hover {
-    background-color: #D9262A;
-    transition: 0.2s linear;
+    background-color: #CC3333;
+    transition: 0.3s;
 }
 
-.header__refresh {
-    background-color: #4DA2E7;
-    color: #fff;
-}
 
 .header__refresh:hover,
 .header__btn_add-row:hover {
-    color: #000;
-    background-color: #fff;
-    transition: 0.2s linear;
+    background-color: #0077AA;
+    transition: 0.3s;
 }
 </style>
