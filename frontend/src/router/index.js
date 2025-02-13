@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Login from '@/views/Login.vue';
 import Cabinet from '@/views/Cabinet.vue';
 import { jwtDecode } from 'jwt-decode';
+import { useLoadingStore } from '@/stores/loadingStore'; // Импортируем Store для прелоадера
 
 const routes = [
   {
@@ -57,9 +58,12 @@ function isAuthenticated() {
   }
 }
 
-// Глобальный перехватчик маршрутов
+// Глобальный перехватчик маршрутов с прелоадером
 router.beforeEach((to, from, next) => {
   console.log(`🚀 Навигация: ${from.path} → ${to.path}`);
+
+  const loadingStore = useLoadingStore();
+  loadingStore.show(); 
 
   if (to.meta.requiresAuth) {
     if (!isAuthenticated()) {
@@ -71,6 +75,14 @@ router.beforeEach((to, from, next) => {
   } else {
     next();
   }
+});
+
+// Скрываем прелоадер после загрузки
+router.afterEach(() => {
+  const loadingStore = useLoadingStore();
+  setTimeout(() => {
+    loadingStore.hide();
+  }, 500); 
 });
 
 export default router;

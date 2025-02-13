@@ -2,22 +2,22 @@
     <div class="login">
         <div class="login__wrapper">
             <div class="login__title">
-                <h1 class="login__name">Вход в базу System Access</h1>
+                <h1 class="login__name">Вход</h1>
             </div>
             <form class="login__form" @submit.prevent="handleLogin">
                 <div class="login__input">
-                    <label for="login_input-host">Хост:</label>
+                    <!-- <label for="login_input-host">Адрес:</label> -->
                     <input id="login_input-host" v-model="form.host" type="text" class="login__input-host"
-                        placeholder="Введите хост" />
+                        placeholder="Введите адрес" />
                 </div>
                 <div class="login__input">
-                    <label for="login_input-login">Логин:</label>
-                    <input id="login_input-login" v-model="form.user" type="text" class="login__input-login"
+                    <!-- <label for="login_input-login">Логин:</label> -->
+                    <input id="login_input-login" v-model="form.user" type="text" class="login__input-login" autocomplete="username"
                         placeholder="Введите логин" />
                 </div>
                 <div class="login__input">
-                    <label for="login_input-password">Пароль:</label>
-                    <input id="login_input-password" v-model="form.password" type="password"
+                    <!-- <label for="login_input-password">Пароль:</label> -->
+                    <input id="login_input-password" v-model="form.password" type="password" autocomplete="current-password"
                         class="login__input-password" placeholder="Введите пароль" />
                 </div>
                 <div class="login__post">
@@ -29,12 +29,18 @@
             </form>
         </div>
     </div>
+    <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
+        :duration="3000" />
 </template>
 
 <script>
 import AuthService from "@/services/authService";
+import Notification from '@/components/Notification.vue';
 
 export default {
+    components: {
+        Notification
+    },
     data() {
         return {
             form: {
@@ -44,6 +50,9 @@ export default {
             },
             errorMessage: "",
             isLoading: false,
+            activateNotification: false,
+            notificationMessage: '',
+            notificationType: 'info',
         };
     },
     created() {
@@ -64,16 +73,23 @@ export default {
             } catch (error) {
                 console.error("Ошибка авторизации:", error);
                 if (error.response) {
-                    this.errorMessage = error.response.data?.message || "Ошибка сервера. Попробуйте снова.";
+                    this.handleError(error.response.data?.message, 'Ошибка сервера. Попробуйте снова.');
                 } else if (error.request) {
-                    this.errorMessage = "Нет ответа от сервера. Проверьте соединение.";
+                    this.handleError(error.request, 'Нет ответа от сервера. Проверьте соединение.');
                 } else {
-                    this.errorMessage = "Неизвестная ошибка. Попробуйте снова.";
+                    this.handleError(error, 'Неизвестная ошибка. Попробуйте снова.');
                 }
             } finally {
                 this.isLoading = false;
                 localStorage.setItem("isLoading", false);
             }
+        }, handleError(err, message) {
+            console.error(message, err);
+            this.notificationMessage = message;
+            this.notificationType = 'error';
+            this.activateNotification = true;
+
+            setTimeout(() => { this.activateNotification = false; }, 3000);
         },
     },
 };
@@ -82,22 +98,22 @@ export default {
 
 <style>
 .login {
-    margin: 100px 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    height: 100vh;
 }
 
 .login__wrapper {
     width: 500px;
     height: 600px;
-    background-color: #A7CEA7;
-    padding: 106px 95px;
+    background-color: #FCFBFC;
+    padding: 150px 90px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     border-radius: 5%;
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
 }
 
 .login__title {
@@ -111,7 +127,7 @@ export default {
     font-family: 'Open Sans', sans-serif;
     font-weight: bold;
     font-size: 24px;
-    color: #fff;
+    color: #0A04A9;
     text-align: center;
 }
 
@@ -121,23 +137,26 @@ export default {
     gap: 15px;
 }
 
-.login__input {
-    height: 42px;
-    background-color: #fff;
-    display: flex;
-    align-items: center;
-    padding: 0 9px;
-    font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
-    font-size: 16px;
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+.login__input>input:focus {
+    border: 3px solid #ccc;
+    transition: 0.2s linear;
 }
 
 .login__input-host,
 .login__input-password,
 .login__input-login {
-    padding: 0 5px;
-    height: 32px;
+    width: 300px;
+    height: 45px;
+    background-color: #fff;
+    color: #0A04A9;
+    display: flex;
+    align-items: center;
+    padding: 5px 12px;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
 }
 
 .login__post {
@@ -148,19 +167,20 @@ export default {
 
 .login__btn {
     display: block;
-    width: 172px;
-    height: 48px;
+    width: 300px;
+    height: 45px;
     color: #fff;
-    background-color: #4DA2E7;
+    background-color: #6506EF;
     font-family: 'Open Sans', sans-serif;
     font-weight: bold;
     font-size: 16px;
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
 }
 
 .login__btn:hover {
-    color: #000;
+    color: #0A04A9;
     background-color: #fff;
     transition: 0.2s linear;
+    border: 2px solid #ccc;
 }
 </style>

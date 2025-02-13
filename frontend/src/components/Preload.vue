@@ -4,10 +4,12 @@
     </svg>
 </template>
 
-<script>
-export default {
+<script setup>
+import { computed } from 'vue';
+import { useLoadingStore } from '@/stores/loadingStore';
 
-}
+const loadingStore = useLoadingStore();
+const loading = computed(() => loadingStore.isLoading);
 </script>
 
 <style>

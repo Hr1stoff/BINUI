@@ -1,7 +1,9 @@
 <template>
     <Transition name="fade">
         <div v-if="visible" :class="['notification', type]" @click="closeNotification">
-            <slot>{{ message }}</slot>
+            <div class="notification__wrap">
+                <slot>{{ message }}</slot>
+            </div>
         </div>
     </Transition>
 </template>
@@ -37,7 +39,7 @@ watchEffect(() => {
 <style scoped>
 .notification {
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 5%;
     color: white;
     font-weight: bold;
     position: fixed;
@@ -46,9 +48,7 @@ watchEffect(() => {
     min-width: 200px;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 1002;
-
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 24px;
@@ -68,7 +68,7 @@ watchEffect(() => {
 }
 
 .info {
-    background-color: #4DA2E7;
+    background-color: #FCFBFC;
 }
 
 .fade-enter-active,
