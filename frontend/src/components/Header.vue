@@ -2,7 +2,7 @@
     <header class="header">
         <div class="header__wrapper">
             <div class="header__selecting">
-                <div class="header__title"><span class="header__name">Выбрать таблицу</span></div>
+                <div class="header__title"><span class="header__name">Выберите таблицу</span></div>
                 <div class="header__table">
                     <select class="header__select" v-model="selectedTableChild">
                         <option v-for="(table, index) in tables" :key="index" :value="table" class="header__option">
@@ -14,7 +14,7 @@
             <div class="header__buttons">
                 <button class="header__btn header__btn_add-row" @click="$emit('openAddRow')"
                     v-if="role != 'user'">Добавить</button>
-                <button class="header__btn header__refresh" @click="$emit('refreshData')">Обновить таблицу</button>
+                <button class="header__btn header__refresh" @click="$emit('refreshData')">Обновить данные</button>
                 <button @click="exit" class="header__btn header__signout">Выход</button>
             </div>
         </div>
@@ -80,13 +80,13 @@ export default {
 }
 
 .header__wrapper {
-    background-color: #D9D9D9;
+    background-color: #FCFBFC;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 36px;
-    border-radius: 5px;
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 11px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .header__selecting {
@@ -99,19 +99,25 @@ export default {
 
 .header__name {
     font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 400;
     font-size: 20px;
-    color: #002B5B;
+    color: #0A04A9;
 }
+
 
 .header__select {
     font-family: 'Open Sans', sans-serif;
     font-weight: 200;
     font-size: 20px;
-    width: 235px;
-    height: 35px;
     background-color: #fff;
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 11px;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+
+}
+
+.header__select:focus {
+    outline: none;
 }
 
 .header__option {
@@ -127,25 +133,28 @@ export default {
 }
 
 .header__btn {
-    padding: 0 10px;
-    height: 35px;
-    background-color: #0099CC;
+    padding: 10px 9px;
+    display: block;
+    color: #fff;
+    background-color: #6506EF;
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 16px;
-    color: #fff;
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: 0.2s linear;
 }
-
-.header__signout:hover {
-    background-color: #CC3333;
-    transition: 0.3s;
-}
-
 
 .header__refresh:hover,
 .header__btn_add-row:hover {
-    background-color: #0077AA;
+    color: #0A04A9;
+    background-color: #fff;
+    border-color: #ccc;
+}
+
+
+.header__signout:hover {
+    background-color: #CC3333;
     transition: 0.3s;
 }
 </style>

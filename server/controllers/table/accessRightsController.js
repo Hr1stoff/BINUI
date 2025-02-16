@@ -36,7 +36,12 @@ router.post('/', authenticateToken, checkDatabasePrivileges, async (req, res) =>
             return res.status(200).json({ message: 'Доступ уже существует, новые записи не добавлены' });
         }
 
-        const insertQuery = `INSERT INTO access_rights (department_id, position_id, system_id, user_type) VALUES ?`;
+        const insertQuery = `
+    INSERT INTO access_rights (department_id, position_id, system_id, user_type)
+    VALUES ?
+    ON DUPLICATE KEY UPDATE user_type = VALUES(user_type);
+`;
+
         const [result] = await connection.query(insertQuery, [newValues]);
 
         await logAction('CREATE', 'access_rights', result.insertId, null, null, JSON.stringify(req.body), 'good');
@@ -73,13 +78,21 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
     let connection;
     try {
         connection = await createConnection({ host, user, password });
-        const dynamicColumns = await generateDynamicColumns(connection);
-        const query = `SELECT 
+
+        // Получаем список всех систем
+        const [systems] = await connection.query('SELECT id, name FROM systems');
+        if (!systems.length) {
+            throw new Error('Список систем пуст или не получен.');
+        }
+
+        // Делаем SQL-запрос для получения всех прав
+        const query = `
+            SELECT 
                 MIN(ar.id) AS id,
                 d.name AS department_name,
                 p.name AS position_name,
                 ar.user_type,
-                ${dynamicColumns}
+                s.name AS system_name
             FROM 
                 access_rights ar
             JOIN 
@@ -89,18 +102,52 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
             JOIN 
                 systems s ON ar.system_id = s.id
             GROUP BY 
-                d.name, p.name, ar.user_type
+                d.name, p.name, ar.user_type, s.name
             ORDER BY 
-                id ASC;`;
+                id ASC;
+        `;
 
         const [results] = await connection.query(query);
 
+        // Группируем данные
+        const groupedResults = results.reduce((acc, row) => {
+            const key = `${row.department_name}-${row.position_name}-${row.user_type}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    id: row.id,
+                    department_name: row.department_name,
+                    position_name: row.position_name,
+                    user_type: row.user_type,
+                    systems: {}
+                };
+
+                // Заполняем все системы 0 по умолчанию
+                systems.forEach(system => {
+                    acc[key].systems[system.name] = 0;
+                });
+            }
+
+            // Если доступ есть, ставим 1
+            acc[key].systems[row.system_name] = 1;
+            return acc;
+        }, {});
+
+        // Преобразуем объект обратно в массив
+        const formattedResults = Object.values(groupedResults).map(item => ({
+            id: item.id,
+            department_name: item.department_name,
+            position_name: item.position_name,
+            user_type: item.user_type,
+            systems: Object.entries(item.systems).map(([name, access]) => ({ [name]: access }))
+        }));
+
         res.status(200).json({
             message: 'Права доступа успешно получены',
-            data: results
+            data: formattedResults
         });
     }
     catch (err) {
+        console.error("Ошибка в запросе к БД:", err); 
         res.status(500).json({
             message: 'Ошибка при получении списка прав доступа',
             error: err.message,
@@ -182,7 +229,7 @@ router.patch('/', authenticateToken, checkDatabasePrivileges, async (req, res) =
 
         const [result] = await connection.query(query, [user_type, departmentName, positionName]);
 
-        await logAction('UPDATE', 'access_rights', result.insertId, null, JSON.stringify(oldValue), JSON.stringify(req.body), 'good');
+        await logAction('UPDATE', 'access_rights', result.affectedRows, null, JSON.stringify(oldValue), JSON.stringify(req.body), 'good');
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -227,7 +274,12 @@ router.delete('/', authenticateToken, checkDatabasePrivileges, async (req, res) 
             position_id = ? AND 
             system_id = ?`;
 
-        const [oldValue] = await connection.query('SELECT * FROM access_rights WHERE id = ?', [id]);
+        const [oldValue] = await connection.query(`
+                SELECT * FROM access_rights 
+                WHERE department_id = ? AND position_id = ? AND system_id = ?`,
+            [department_id, position_id, system_id]
+        );
+
 
         const [result] = await connection.query(query, [department_id, position_id, system_id]);
         await logAction('DELETE', 'access_rights', result.insertId, null, null, JSON.stringify(oldValue), 'good');

@@ -2,23 +2,20 @@
     <div class="login">
         <div class="login__wrapper">
             <div class="login__title">
-                <h1 class="login__name">Вход</h1>
+                <h1 class="login__name">Вход в Систему Управления Правами и Доступом</h1>
             </div>
             <form class="login__form" @submit.prevent="handleLogin">
                 <div class="login__input">
-                    <!-- <label for="login_input-host">Адрес:</label> -->
                     <input id="login_input-host" v-model="form.host" type="text" class="login__input-host"
                         placeholder="Введите адрес" />
                 </div>
                 <div class="login__input">
-                    <!-- <label for="login_input-login">Логин:</label> -->
-                    <input id="login_input-login" v-model="form.user" type="text" class="login__input-login" autocomplete="username"
-                        placeholder="Введите логин" />
+                    <input id="login_input-login" v-model="form.user" type="text" class="login__input-login"
+                        autocomplete="username" placeholder="Введите логин" />
                 </div>
                 <div class="login__input">
-                    <!-- <label for="login_input-password">Пароль:</label> -->
-                    <input id="login_input-password" v-model="form.password" type="password" autocomplete="current-password"
-                        class="login__input-password" placeholder="Введите пароль" />
+                    <input id="login_input-password" v-model="form.password" type="password"
+                        autocomplete="current-password" class="login__input-password" placeholder="Введите пароль" />
                 </div>
                 <div class="login__post">
                     <button type="submit" class="login__btn" :disabled="isLoading">
@@ -105,6 +102,7 @@ export default {
 }
 
 .login__wrapper {
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     width: 500px;
     height: 600px;
     background-color: #FCFBFC;
@@ -113,7 +111,7 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 5%;
+    border-radius: 11px;
 }
 
 .login__title {
@@ -123,9 +121,9 @@ export default {
 }
 
 .login__name {
-    width: 230px;
+    /* width: 230px; */
     font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 400;
     font-size: 24px;
     color: #0A04A9;
     text-align: center;
@@ -134,7 +132,7 @@ export default {
 .login__form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
 }
 
 .login__input>input:focus {
@@ -153,7 +151,7 @@ export default {
     align-items: center;
     padding: 5px 12px;
     font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 400;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 10px;
@@ -172,7 +170,7 @@ export default {
     color: #fff;
     background-color: #6506EF;
     font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 400;
     font-size: 16px;
     border-radius: 10px;
 }

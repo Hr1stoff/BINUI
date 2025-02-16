@@ -8,7 +8,8 @@
                 <span class="ConfirmationDialog__message">{{ message }}</span>
             </div>
             <div class="ConfirmationDialog__buttons">
-                <button class="ConfirmationDialog__btn ConfirmationDialog__btn_confirm" @click="confirmAction">Ок</button>
+                <button class="ConfirmationDialog__btn ConfirmationDialog__btn_confirm"
+                    @click="confirmAction">Ок</button>
                 <button class="ConfirmationDialog__btn ConfirmationDialog__btn_close"
                     @click="$emit('closeConfirmWindow')">Отмена</button>
             </div>
@@ -33,7 +34,7 @@ export default {
     },
     emits: ['closeConfirmWindow', 'confirmAction'],
     methods: {
-        confirmAction(){
+        confirmAction() {
             this.$emit('confirmAction');
         }
     }
@@ -56,7 +57,7 @@ export default {
 .ConfirmationDialog__wrapper {
     height: 200px;
     background-color: #fff;
-    border-radius: 5px;
+    border-radius: 11px;
     padding: 20px;
 
     display: flex;
@@ -93,20 +94,24 @@ export default {
 }
 
 .ConfirmationDialog__btn {
-    width: 150px;
-    height: 35px;
-    border: 1px solid #000;
-
-    font-family: 'Open Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-}
-
-.ConfirmationDialog__btn_confirm:hover {
-    background-color: #A7CEA7;
-    transition: 0.1s linear;
-    border: 1px solid #ccc;
+    padding: 10px 9px;
+    display: block;
     color: #fff;
+    background-color: #6506EF;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: 0.2s linear;
+}
+.ConfirmationDialog__btn_confirm{
+    border: 1px solid #ccc;
+}
+.ConfirmationDialog__btn_confirm:hover {
+    color: #0A04A9;
+    background-color: #fff;
+    transition: 0.3s;
 }
 
 .ConfirmationDialog__btn_close:hover {

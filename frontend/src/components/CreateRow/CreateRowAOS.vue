@@ -30,7 +30,7 @@
             </div>
             <button v-if="forms.length > 1" @click.prevent="removeRow(rowIndex)"
                 class="create-row__btn create-row__btn_remove">
-                ✖
+                &#65794;
             </button>
         </div>
     </form>

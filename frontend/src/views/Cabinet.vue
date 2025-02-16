@@ -1,11 +1,11 @@
 <template>
-    <!-- Уведомления -->
+    <!-- Уведомления
     <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
-        :duration="3000" />
-    <!-- Окно подтверждения удаления -->
+        :duration="3000" /> -->
+    <!-- Окно подтверждения удаления
     <ConfirmationDialog v-if="showConfirmWindow" title="Подтверждение удаления"
         message="Вы уверены, что хотите удалить эту запись?" @confirmAction="confirmDelete"
-        @closeConfirmWindow="showConfirmWindow = false" />
+        @closeConfirmWindow="showConfirmWindow = false" /> -->
 
     <div class="preloader" v-if="isLoading">
         <Preload />
@@ -14,8 +14,10 @@
         <Header :selectedTable="selectedTable" :tables="tables" @tableSelected="getSelectedTable"
             @refreshData="fetchData" @openAddRow="openAddRow" :role="role" />
 
-        <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="openConfirmWindow"
-            :allSystems="allSystems" :role="role" />
+        <Cards :data="dataTable" :headers="headers" :selectedTable="selectedTable" :allSystems="allSystems" :role="role" />
+
+        <!-- <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="openConfirmWindow"
+            :allSystems="allSystems" :role="role" /> -->
 
         <!-- Компонент для создания новых строк -->
         <CreateRow v-if="showAddRow" :selectedTable="selectedTable" :localTables="tables"
@@ -37,6 +39,7 @@ import Table from '@/views/Table.vue';
 import CreateRow from '@/components/CreateRow/CreateRow.vue';
 import Notification from '@/components/Notification.vue';
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue';
+import Cards from '@/components/Cards.vue';
 
 import api from '@/services/api';
 
@@ -80,7 +83,8 @@ export default {
         Preload,
         CreateRow,
         Notification,
-        ConfirmationDialog
+        ConfirmationDialog,
+        Cards
     },
     beforeUnmount() {
         window.removeEventListener('scroll', this.handleScroll);
@@ -324,19 +328,51 @@ export default {
 .scroll-button {
     position: fixed;
     bottom: 30px;
-    background-color: #0077AA;
+    background-color: #6506EF;
     right: 35px;
     color: white;
     border: none;
-    padding: 10px 15px;
+    width: 50px;
+    height: 50px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 25px;
     transition: 0.3s;
     z-index: 1000;
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 100%;
 }
 
 .scroll-button:hover {
     background-color: #0056b3;
+}
+
+.content {
+    margin: 15px 0;
+    background-color: #FCFBFC;
+    padding: 15px 30px;
+    border-radius: 11px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.content__search {
+    width: 500px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.content__search-input {
+    width: 100%;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    padding: 12px 15px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 11px;
 }
 </style>

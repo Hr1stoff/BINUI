@@ -337,10 +337,10 @@ export default {
 <style>
 .table {
     margin: 15px 0;
-    background-color: #D9D9D9;
+    background-color: #FCFBFC;
     padding: 15px 30px;
     box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
+    border-radius: 11px;
     height: 100%;
     width: 100%;
     display: flex;

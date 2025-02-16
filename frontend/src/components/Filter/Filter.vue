@@ -3,7 +3,8 @@
         <button class="table__filter-btn" @click="show = !show">Фильтр</button>
 
         <div class="table__filter-wrap" v-if="show">
-            <LogsFilter ref="logsFilter" v-if="selectedTable == 'logs'" @getUpdateFilter="updateFilteredLogs" @applyFilters="applyFilters" @resetFilters="resetFilters" />
+            <LogsFilter ref="logsFilter" v-if="selectedTable == 'logs'" @getUpdateFilter="updateFilteredLogs"
+                @applyFilters="applyFilters" @resetFilters="resetFilters" />
 
             <div class="table__filter-error" v-if="errorOpen">
                 {{ message }}
@@ -44,7 +45,7 @@ export default {
         }
     },
     methods: {
-        applyFilters() {            
+        applyFilters() {
             this.$refs.logsFilter.applyFilters();
         },
 
@@ -62,21 +63,22 @@ export default {
 
 <style>
 .table__filter-btn {
+    padding: 15px 15px;
     display: block;
-    padding: 0 10px;
-    /* width: 100px; */
-    height: 35px;
-    background-color: #0099CC;
+    color: #fff;
+    background-color: #6506EF;
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 16px;
-    color: #fff;
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: 0.2s linear;
 }
 
 .table__filter-btn:hover {
-    background-color: #0077AA;
-    transition: 0.3s;
+    color: #0A04A9;
+    background-color: #fff;
+    border-color: #ccc;
 }
 
 .table__filter-wrap {
@@ -85,7 +87,7 @@ export default {
     width: 500px;
     height: 300px;
     background-color: #fff;
-    border-radius: 5px;
+    border-radius: 11px;
     padding: 15px;
     margin-top: 10px;
     border: 1px solid #ccc;
