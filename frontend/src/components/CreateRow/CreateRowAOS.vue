@@ -3,6 +3,7 @@
 
     <form @submit.prevent="submitForm" v-else-if="chosenNameTable == 'system_attributes'"
         class="create-row__form create-row__form-aos">
+        
         <div v-for="(row, rowIndex) in forms" :key="rowIndex" class="create-row__row create-row__row-system-attr">
             <div v-for="(field, id) in filterStructureTable" :key="id" class="create-row__wrap create-row__inputs">
                 <div class="create-row__wrap-system-attr" v-if="field.Field === 'system_id'">

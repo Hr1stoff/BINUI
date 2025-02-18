@@ -21,13 +21,12 @@
                     @submitForm="handleFormAccessSubmit" />
 
                 <!-- Создание строки для Отделов, Должности и Системы -->
-                <CreateRowOther v-else-if="['departments', 'position', 'systems'].includes(chosenNameTable)"
-                    :token="token" :structureTable="structureTable" @submitForm="handleFormOtherSubmit"
-                    ref="formComponent" />
+                <CreateRowOther v-if="['departments', 'position', 'systems'].includes(chosenNameTable)" :token="token"
+                    :structureTable="structureTable" @submitForm="handleFormOtherSubmit" ref="formComponent" />
 
                 <!-- Создание строк для Новых атрибутов в систему -->
-                <CreateRowAOS v-else-if="chosenNameTable === 'system_attributes'" :token="token"
-                    :structureTable="structureTable" :systems="systems" @submitForm="handleFormAOSSubmit"
+                <CreateRowAOS v-if="chosenNameTable === 'system_attributes'" :token="token"
+                    :structureTable="structureTable" :systems="systems" @submitForm="handleFormAOSSubmit" :chosenNameTable="chosenNameTable"
                     ref="formComponent" />
 
                 <div class="create-row__buttons">
@@ -44,7 +43,7 @@
         <!-- Уведомление -->
         <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
             :duration="3000" />
-       
+
 
     </section>
 </template>

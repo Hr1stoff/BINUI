@@ -13,10 +13,11 @@
 
 .table__modal-wrapper {
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 11px;
     background-color: #fff;
 }
-.table__modal-content{
+
+.table__modal-content {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -30,7 +31,7 @@
 .table__modal-title {
     font-family: 'Open Sans', sans-serif;
     font-size: 32px;
-    font-weight: 700;
+    font-weight: 400;
     padding: 15px 0px;
 }
 
@@ -77,27 +78,28 @@
 }
 
 .table__modal-btn {
-    width: 120px;
-    height: 35px;
-    border: 1px solid #000;
-    padding: 5px;
-
+    width: 150px;
+    padding: 10px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background-color: #6506EF;
     font-family: 'Open Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: 0.2s linear;
 }
 
 .table__modal-btn_safe:hover {
-    background-color: #A7CEA7;
-    transition: 0.1s linear;
+    color: #0A04A9;
+    background-color: #fff;
+    transition: 0.3s;
     border: 1px solid #ccc;
-    color: #fff;
 }
 
 .table__modal-btn_cancel:hover {
     background-color: #D9262A;
     transition: 0.1s linear;
-    border: 1px solid #ccc;
     color: #fff;
 }

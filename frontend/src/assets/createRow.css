@@ -44,7 +44,9 @@
     border: 1px solid #ccc;
     padding: 5px 10px;
 }
-
+.create-row__select:focus{
+    outline: none;
+}
 .create-row__option {}
 
 .create-row__buttons {

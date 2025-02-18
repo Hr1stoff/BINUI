@@ -1,6 +1,7 @@
 <template>
     <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
         :duration="3000" />
+
     <section class="cards">
         <div class="cards__search">
             <input type="text" v-model="searchQuery" placeholder="Поиск..." class="cards__search-input">
@@ -12,45 +13,8 @@
             <div class="cards__item" v-for="(item, index) in filterData" :key="index">
                 <div class="cards__header">
                     <div class="cards__title">
-                        <span class="cards__position">{{ item.position_name || item.name }}</span>
-                        <span class="cards__department">{{ item.department_name }}</span>
-                    </div>
-                    <div class="cards__modal">
-                        <button class="cards__btn-modal" @click="toggleCardBtns(index)">&#8226; &#8226;
-                            &#8226;</button>
-                        <div class="cards__modal-wrap" v-if="showCardBtns[index]">
-                            <button class="cards__btn cards__btn_change" @click="openEditWindow(row)"
-                                v-if="!isRestrictedTable(selectedTable) && role !== 'user'"
-                                aria-label="Изменить запись">
-                                Изменить
-                            </button>
-                            <button class="cards__btn cards__btn_delete" @click="onDeleteRow(item.id)"
-                                v-if="!isRestrictedTable(selectedTable, true) && role !== 'user'"
-                                aria-label="Удалить запись">
-                                Удалить
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="cards__user-type" v-if="selectedTable == 'access_rights'">
-                    <img class="cards__icon" :src="(item.user_type || '') === 'ФИО' ? iconArr.user : iconArr.shop">
-                    <span class="cards__user-type-title">{{ item.user_type }}</span>
-                </div>
-                <div class="cards__systems">
-                    <div class="cards__system" v-for="(system, sysIndex) in item.systems" :key="sysIndex"
-                        :class="{ 'cards__system_access': system && Object.values(system)[0] === 1 }">
-                        <span class="cards__system-name">{{ system ? Object.keys(system)[0] : '' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="cards__wrapper"
-            v-if="filterData.length > 0 && ['system_attributes', 'access_rights_attr', 'open_in_systems'].includes(selectedTable)">
-            <div class="cards__item" v-for="(item, index) in filterData" :key="index">
-                <div class="cards__header">
-                    <div class="cards__title">
-                        <span class="cards__position">{{ item.position_name || item.name }}</span>
-                        <span class="cards__department">{{ item.department_name }}</span>
+                        <span class="cards__name">{{ item.position_name || item.name }}</span>
+                        <span class="cards__name cards__name_bold">{{ item.department_name }}</span>
                     </div>
                     <div class="cards__modal">
                         <button class="cards__btn-modal" @click="toggleCardBtns(index)">&#8226; &#8226;
@@ -82,6 +46,38 @@
             </div>
         </div>
 
+        <div class="cards__wrapper"
+            v-if="filterData.length > 0 && ['system_attributes'].includes(selectedTable)">
+            <div class="cards__item" v-for="(item, index) in filterData" :key="index">
+                <div class="cards__header">
+                    <div class="cards__title">
+                        <span class="cards__name">{{ item.system_name || item.name }}</span>
+                        <!-- <span class="cards__name cards__name_bold">{{ item.name }}</span> -->
+                    </div>
+                    <div class="cards__modal">
+                        <button class="cards__btn-modal" @click="toggleCardBtns(index)">&#8226; &#8226;
+                            &#8226;</button>
+                        <div class="cards__modal-wrap" v-if="showCardBtns[index]">
+                            <button class="cards__btn cards__btn_change" @click="openEditWindow(row)"
+                                v-if="!isRestrictedTable(selectedTable) && role !== 'user'"
+                                aria-label="Изменить запись">
+                                Изменить
+                            </button>
+                            <button class="cards__btn cards__btn_delete" @click="onDeleteRow(item.id)"
+                                v-if="!isRestrictedTable(selectedTable, true) && role !== 'user'"
+                                aria-label="Удалить запись">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cards__attribute" v-if="selectedTable == 'system_attributes'">
+                    <span class="cards__name cards__name_attribute">Название атрибута: <p class="cards__name">{{ item.name }}</p></span>
+                    
+                    <span class="cards__name cards__name_attribute">Значение атрибута:<p class="cards__name">{{ item.value }}</p></span>
+                </div>
+            </div>
+        </div>
 
         <div class="table__wrapper table__wrapper_empty" v-else-if="showEmptyMessage">
             <h1 class="table__explanation">
@@ -100,6 +96,7 @@
     <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :editableRow="editableRow"
         :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" />
 
+    <!-- Подтверждение удаления -->
     <ConfirmationDialog v-if="showConfirmWindow" title="Подтверждение удаления"
         message="Вы уверены, что хотите удалить эту запись?" @confirmAction="confirmDelete"
         @closeConfirmWindow="showConfirmWindow = false" />
@@ -148,6 +145,7 @@ export default {
             token: localStorage.getItem('accessToken'),
             searchQuery: '',
             editableRow: {},
+            userTypeOptions: null,
             showEmptyMessage: false,
             searchNotFound: false,
             deletingRow: null,
@@ -341,13 +339,13 @@ export default {
     max-width: 250px;
 }
 
-.cards__department {
+.cards__name {
     font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 16px;
 }
 
-.cards__position {
+.cards__name_bold {
     font-family: 'Open Sans', sans-serif;
     font-weight: 600;
     font-size: 16px;
@@ -385,7 +383,8 @@ export default {
 .cards__modal-wrap {
     width: 120px;
     position: absolute;
-    right: -15px;
+    top: 15px;
+    right: -25px;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -444,4 +443,15 @@ export default {
 .cards__system_access {
     background-color: #A7CEA7;
 }
+
+
+.cards__attribute {
+    display: flex;
+    justify-content: space-between;
+
+}
+.cards__name_attribute {
+    font-weight: 600;
+}
+
 </style>

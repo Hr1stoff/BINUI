@@ -9,7 +9,7 @@
 
         </div>
         <!-- Preload при загрузке данных -->
-        <Preload v-if="isLoading && showEmptyMessage" />
+        <Preload class="preload" v-if="isLoading && showEmptyMessage" />
 
 
         <!-- Отображение таблицы -->
@@ -19,7 +19,6 @@
                     <th class="table__cell table__cell_header" v-for="(header, index) in headers" :key="index">
                         {{ header }}
                     </th>
-                    <th class="table__cell table__cell_header table__cell_actions">Действия</th>
                 </tr>
             </thead>
             <tbody class="table__body">
@@ -58,9 +57,9 @@
             </h1>
         </div>
     </div>
-    <!-- Компонент для измненения строк -->
+    <!-- Компонент для измненения строк
     <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :editableRow="editableRow"
-        :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" />
+        :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" /> -->
 
 
 
@@ -335,36 +334,38 @@ export default {
 </script>
 
 <style>
+.preload{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .table {
-    margin: 15px 0;
-    background-color: #FCFBFC;
-    padding: 15px 30px;
-    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
-    border-radius: 11px;
+    padding: 15px 0px;
     height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 15px;
 }
 
-.table__search {
-    width: 500px;
+.table>.table__search {
     display: flex;
     align-items: center;
+    justify-content: left;
     gap: 15px;
 }
 
 .table__search-input {
-    width: 100%;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    width: 40%;
     font-family: 'Open Sans', sans-serif;
     font-weight: 200;
     font-size: 16px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-
-    padding: 8px;
-    background-color: #fff;
+    padding: 15px 15px;
+    background-color: #FCFBFC;
+    border: 1px solid #ccc;
+    border-radius: 11px;
 }
 
 .table__wrapper {
@@ -373,7 +374,6 @@ export default {
     background: #FFFFFF;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .table__head {

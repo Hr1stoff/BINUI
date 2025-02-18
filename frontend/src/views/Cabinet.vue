@@ -2,11 +2,6 @@
     <!-- Уведомления
     <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
         :duration="3000" /> -->
-    <!-- Окно подтверждения удаления
-    <ConfirmationDialog v-if="showConfirmWindow" title="Подтверждение удаления"
-        message="Вы уверены, что хотите удалить эту запись?" @confirmAction="confirmDelete"
-        @closeConfirmWindow="showConfirmWindow = false" /> -->
-
     <div class="preloader" v-if="isLoading">
         <Preload />
     </div>
@@ -14,14 +9,18 @@
         <Header :selectedTable="selectedTable" :tables="tables" @tableSelected="getSelectedTable"
             @refreshData="fetchData" @openAddRow="openAddRow" :role="role" />
 
-        <Cards :data="dataTable" :headers="headers" :selectedTable="selectedTable" :allSystems="allSystems" :role="role" />
+        <Cards v-if="['access_rights', 'departments', 'position', 'systems', 'system_attributes'].includes(selectedTable)" :data="dataTable"
+            :headers="headers" :selectedTable="selectedTable" :allSystems="allSystems" :role="role" />
 
-        <!-- <Table :data="dataTable" :headers="headers" :selectedTable="selectedTable" @deleteRow="openConfirmWindow"
-            :allSystems="allSystems" :role="role" /> -->
+        <Table v-if="['logs'].includes(selectedTable)" :data="dataTable" :headers="headers"
+            :selectedTable="selectedTable" @deleteRow="openConfirmWindow" :allSystems="allSystems" :role="role" />
 
         <!-- Компонент для создания новых строк -->
         <CreateRow v-if="showAddRow" :selectedTable="selectedTable" :localTables="tables"
             @closeCreateWindow="onCloseCreateWindow" />
+
+        <!-- Компонент для измненения строк -->
+        <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :allSystems="allSystems" @close="closeEditWindow"/>
 
         <!-- Кнопка для прокрутки -->
         <button v-if="showScrollButton && !showAddRow" class="scroll-button" @click="scrollToBottom">
@@ -37,8 +36,8 @@ import Preload from '@/components/Preload.vue';
 import Header from '@/components/Header.vue';
 import Table from '@/views/Table.vue';
 import CreateRow from '@/components/CreateRow/CreateRow.vue';
+import ChangeRow from '@/components/ChangeRow/ChangeRow.vue';
 import Notification from '@/components/Notification.vue';
-import ConfirmationDialog from '@/components/ConfirmationDialog.vue';
 import Cards from '@/components/Cards.vue';
 
 import api from '@/services/api';
@@ -59,10 +58,10 @@ export default {
             activateNotification: false,
             notificationMessage: '',
             notificationType: 'info',
-            showConfirmWindow: false,
             rowToDelete: null,
             isAtBottom: false, // Переменная для проверки, находится ли пользователь внизу
-            showScrollButton: false // Отображение кнопки скролла
+            showScrollButton: false, // Отображение кнопки скролла
+            showEditModal: false,
         };
     },
     async beforeRouteEnter(to, from, next) {
@@ -83,8 +82,8 @@ export default {
         Preload,
         CreateRow,
         Notification,
-        ConfirmationDialog,
-        Cards
+        Cards,
+        ChangeRow
     },
     beforeUnmount() {
         window.removeEventListener('scroll', this.handleScroll);
@@ -236,59 +235,6 @@ export default {
             this.rowToDelete = id;
             this.showConfirmWindow = true;
         },
-        // удаление строки по id в выбранной таблице
-        async confirmDelete() {
-            if (!this.rowToDelete) return;
-
-            try {
-                const response = await api.delete(`/${this.selectedTable}/${this.rowToDelete}`, {
-                    headers: { Authorization: `Bearer ${this.token}` }
-                });
-
-                if (response.status === 200) {
-                    this.notificationMessage = response.data.message;
-                    this.notificationType = 'success';
-                    this.activateNotification = true;
-
-                    setTimeout(() => {
-                        this.activateNotification = false;
-                    }, 3000);
-
-                    this.showConfirmWindow = false;
-                    await this.getTableData();
-                }
-            } catch (err) {
-                if (err.response) {
-                    const { status, data } = err.response;
-
-                    if (status === 404) {
-                        this.notificationMessage = `Ошибка: Запись ${this.rowToDelete} не найдена.`;
-                    } else if (status === 400) {
-                        this.notificationMessage = data.message || 'Ошибка: Удаление невозможно из-за зависимостей.';
-                    } else if (status === 500) {
-                        this.notificationMessage = 'Серверная ошибка при удалении. Попробуйте позже.';
-                    } else {
-                        this.notificationMessage = `Ошибка: ${data.message || 'Неизвестная ошибка'}`;
-                    }
-                } else {
-                    this.notificationMessage = 'Ошибка соединения с сервером.';
-                }
-
-                this.notificationType = 'error';
-                this.activateNotification = true;
-
-                setTimeout(() => {
-                    this.activateNotification = false;
-                }, 5000);
-                setTimeout(() => {
-                    this.showConfirmWindow = false;
-                    this.getTableData();
-                }, 2000);
-            } finally {
-                this.rowToDelete = null;
-            }
-        }
-        ,
         // открытие модульного окна для создания новых данных
         openAddRow() {
             this.showAddRow = true
@@ -306,7 +252,10 @@ export default {
 
             setTimeout(() => { this.activateNotification = false; }, 3000);
         },
-
+        closeEditWindow() {
+            this.showEditModal = false;
+            this.editableRow = {};
+        },
     },
     provide() {
         return {

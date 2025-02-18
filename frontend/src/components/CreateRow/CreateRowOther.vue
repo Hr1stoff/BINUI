@@ -6,6 +6,7 @@
             <div v-for="(field, id) in filterStructureTable" :key="id" class="create-row__wrap create-row__inputs">
                 <label class="create-row__attr-title">{{ field.Field === "name" ? "Название" : field.Field }}: </label>
                 <input v-model="row[field.Field]" class="create-row__input" placeholder="Введите данные" />
+                
             </div>
             <button v-if="forms.length > 1" @click.prevent="removeRow(rowIndex)"
                 class="create-row__btn create-row__btn_remove">
