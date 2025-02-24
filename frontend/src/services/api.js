@@ -4,7 +4,7 @@ import AuthService from '@/services/authService';
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
 });
-
+//'http://localhost:3000/api' 'http://85.192.30.80:8080/api
 
 // Добавляем токен в заголовки запросов
 api.interceptors.request.use(async (config) => {

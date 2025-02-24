@@ -49,7 +49,18 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
         connection = await createConnection({ host, user, password });
 
         const query = `
-            SELECT * FROM open_in_systems
+            SELECT 
+    o.id,
+    u.full_name AS user_name,
+    s.name AS system_name,
+    CASE 
+        WHEN o.status = 1 THEN 'Активен'
+        ELSE 'Не активен'
+    END AS status
+FROM open_in_systems o
+JOIN users u ON o.user_id = u.id
+JOIN systems s ON o.system_id = s.id;
+
         `;
         const [results] = await connection.query(query);
 
@@ -137,6 +148,7 @@ router.delete('/:id', authenticateToken, checkDatabasePrivileges, async (req, re
             message: 'Запись успешно удалена',
         });
     } catch (err) {
+        console.error("Ошибка в запросе к БД:", err);
         res.status(500).json({
             message: 'Ошибка при удалении записи',
             error: err.message,

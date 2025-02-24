@@ -12,7 +12,23 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
     let connection;
     try {
         connection = await createConnection({ host, user, password });
-        const query = 'SELECT * FROM users';
+        const query = `SELECT 
+    u.id,
+    u.username,
+    u.full_name,
+    u.mail,
+    d.name AS department_name,
+    p.name AS position_name,
+    u.active,
+    u.phone,
+    u.tg_id,
+    u.tg_status,
+    u.created_at,
+    u.updated_at
+FROM users u
+LEFT JOIN departments d ON u.department_id = d.id
+LEFT JOIN position p ON u.position_id = p.id;
+`;
         const [results] = await connection.query(query);
 
         res.status(200).json({ data: results });
@@ -54,6 +70,7 @@ router.delete('/:id', authenticateToken, checkDatabasePrivileges, async (req, re
 
         res.status(200).json({ message: `Запись с ID ${id} удалена` });
     } catch (err) {
+        console.error("Ошибка в запросе к БД:", err);
         res.status(500).json({ message: `Ошибка при удалении пользователя с ID ${id}`, error: err.message });
     } finally {
         if (connection) {

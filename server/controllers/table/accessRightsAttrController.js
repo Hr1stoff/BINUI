@@ -36,6 +36,7 @@ ORDER BY d.name, p.name, s.name, sa.name;
             data: results,
         });
     } catch (err) {
+        console.error("Ошибка в запросе к БД:", err); 
         res.status(500).json({
             message: 'Ошибка при получении данных',
             error: err.message,

@@ -122,6 +122,7 @@ router.delete('/:id', authenticateToken, checkDatabasePrivileges, async (req, re
                 error: err.message
             });
         }
+        console.error("Ошибка в запросе к БД:", err); 
         res.status(500).json({ message: `Ошибка при удалении должности ${id}`, error: err.message });
     }
     finally {

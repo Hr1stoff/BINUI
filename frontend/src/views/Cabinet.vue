@@ -9,21 +9,18 @@
         <Header :selectedTable="selectedTable" :tables="tables" @tableSelected="getSelectedTable"
             @refreshData="fetchData" @openAddRow="openAddRow" :role="role" />
 
-        <Cards v-if="['access_rights', 'departments', 'position', 'systems', 'system_attributes'].includes(selectedTable)" :data="dataTable"
+        <Cards v-if="['access_rights', 'departments', 'position', 'systems', 'system_attributes','access_rights_attr'].includes(selectedTable)" :data="dataTable"
             :headers="headers" :selectedTable="selectedTable" :allSystems="allSystems" :role="role" />
 
-        <Table v-if="['logs'].includes(selectedTable)" :data="dataTable" :headers="headers"
+        <Table v-if="['logs', 'users', 'open_in_systems'].includes(selectedTable)" :data="dataTable" :headers="headers"
             :selectedTable="selectedTable" @deleteRow="openConfirmWindow" :allSystems="allSystems" :role="role" />
 
-        <!-- Компонент для создания новых строк -->
-        <CreateRow v-if="showAddRow" :selectedTable="selectedTable" :localTables="tables"
+        <CreateRow v-show="showAddRow" :selectedTable="selectedTable" :localTables="tables"
             @closeCreateWindow="onCloseCreateWindow" />
 
-        <!-- Компонент для измненения строк -->
         <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :allSystems="allSystems" @close="closeEditWindow"/>
 
-        <!-- Кнопка для прокрутки -->
-        <button v-if="showScrollButton && !showAddRow" class="scroll-button" @click="scrollToBottom">
+        <button v-show="showScrollButton && !showAddRow" class="scroll-button" @click="scrollToBottom">
             {{ isAtBottom ? "↑" : "↓" }}
         </button>
     </div>

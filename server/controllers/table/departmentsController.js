@@ -56,6 +56,7 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
         res.status(200).json({ data: results });
     }
     catch (err) {
+        console.error("Ошибка в запросе к БД:", err); 
         res.status(500).json({ message: 'Ошибка получения списка отделов', error: err.message });
     }
     finally {

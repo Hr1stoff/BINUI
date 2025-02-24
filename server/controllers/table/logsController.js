@@ -19,6 +19,7 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
 
     }
     catch (err) {
+        console.error("Ошибка в запросе к БД:", err); 
         res.status(500).json({ message: 'Ошибка при получении списка логов', error: err.message })
     }
     finally {

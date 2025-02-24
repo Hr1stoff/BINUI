@@ -1,18 +1,14 @@
 <template>
     <Notification v-if="activateNotification" :message="notificationMessage" :type="notificationType"
         :duration="3000" />
-    <div class="table">
-        <!-- Поиск и фильтр  -->
+    <Preload class="preload" v-if="isLoading && showEmptyMessage" />
+    <div class="table" v-else>
         <div class="table__search">
             <input type="text" v-model="searchQuery" placeholder="Введите текст для поиска" class="table__search-input">
-            <Filter :selectedTable="selectedTable" :headers="headers" />
-
+            <Filter @filteredLogsUpdated="updateFilteredLogs" :selectedTable="selectedTable" :headers="headers"
+                :token="token" :data="data" />
         </div>
-        <!-- Preload при загрузке данных -->
-        <Preload class="preload" v-if="isLoading && showEmptyMessage" />
 
-
-        <!-- Отображение таблицы -->
         <table class="table__wrapper" v-if="filterData.length > 0 && headers.length > 0">
             <thead class="table__head">
                 <tr class="table__row">
@@ -22,9 +18,13 @@
                 </tr>
             </thead>
             <tbody class="table__body">
-                <tr class="table__row" v-for="row in filterData" :key="row.id">
+                <tr class="table__row" v-for="row in filteredData" :key="row.id">
+
                     <td class="table__cell" v-for="(cell, key) in row" :key="key">
-                        <span class="table__title">{{ cell }}</span>
+                        <span v-if="key === 'created_at' || key === 'updated_at'|| key === 'timestamp'" class="table__date">
+                            {{ formatDate(cell) }}
+                        </span>
+                        <span v-else> {{ formatValue(cell) }}</span>
                     </td>
                     <td class="table__wrap-btn">
                         <div class="table__buttons">
@@ -44,25 +44,19 @@
             </tbody>
         </table>
 
-        <!-- Сообщение, если таблица пустая -->
+
         <div class="table__wrapper table__wrapper_empty" v-else-if="showEmptyMessage">
             <h1 class="table__explanation">
                 Данная таблица <span>{{ selectedTable }}</span> пустая
             </h1>
         </div>
-        <!-- Если поиск не нашел ничего -->
+
         <div class="table__wrapper table__wrapper_empty" v-else-if="searchNotFound">
             <h1 class="table__explanation">
                 По запросу "<span>{{ searchQuery }}</span>" ничего не найдено
             </h1>
         </div>
     </div>
-    <!-- Компонент для измненения строк
-    <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :editableRow="editableRow"
-        :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" /> -->
-
-
-
 </template>
 
 <script>
@@ -72,6 +66,7 @@ import ChangeRow from '@/components/ChangeRow/ChangeRow.vue';
 import Filter from '@/components/Filter/Filter.vue';
 import api from '@/services/api';
 import { ref, nextTick } from "vue";
+import dayjs from "dayjs";
 
 export default {
     emits: ["deleteRow", 'openEditWindow', 'closeEditWindow', 'errorMessage'],
@@ -97,7 +92,7 @@ export default {
     },
     data() {
         return {
-            localData: this.data,
+            filteredData: this.data,
             editableRow: {},
             searchQuery: '',
             showEmptyMessage: false,
@@ -131,7 +126,8 @@ export default {
             this.showEmptyMessage = false;
             this.searchNotFound = filtered.length === 0;
 
-            return filtered;
+            return this.filteredData;
+
         },
     },
     components: {
@@ -143,27 +139,23 @@ export default {
     watch: {
         data: {
             handler(newData) {
-                if (newData.length > 0) {
-                    this.isLoading = false;
-                    this.showEmptyMessage = false;
-                    clearTimeout(this.timeout);
-                } else {
-                    this.isLoading = true;
-                    this.showEmptyMessage = false;
-
-
-                    this.timeout = setTimeout(() => {
-                        if (this.data.length === 0) {
-                            this.showEmptyMessage = true;
-                            this.isLoading = false;
-                        }
-                    }, 4000);
-                }
+                this.filteredData = [...newData];
             },
-            immediate: true
+            immediate: true,
+            deep: true
         }
     },
     methods: {
+        formatDate(dateString) {
+            if (!dateString) return "-";
+            return dayjs(dateString).format("YYYY-MM-DD HH:mm:ss");
+        },
+        formatValue(value) {
+            if (value === null || value === "" || value === undefined) {
+                return "None";
+            }
+            return value;
+        },
         isRestrictedTable(table, includeAccessRights = false) {
             const restrictedTables = ['logs', 'open_in_systems', 'users', 'access_rights_attr'];
             if (includeAccessRights) restrictedTables.push('access_rights');
@@ -323,23 +315,16 @@ export default {
         delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         },
-    },
-    provide() {
-        return {
-            localData: this.localData
+        updateFilteredLogs(filteredLogs) {
+            console.log("📌 Обновленные данные в таблице:", filteredLogs);
+            this.filteredData = filteredLogs;
         }
-    }
+    },
 
 }
 </script>
 
 <style>
-.preload{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .table {
     padding: 15px 0px;
     height: 100%;

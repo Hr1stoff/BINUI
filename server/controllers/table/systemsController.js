@@ -24,6 +24,7 @@ router.post('/', authenticateToken, checkDatabasePrivileges, async (req, res) =>
         res.status(201).json({ message: 'Система успешно создана' });
     }
     catch (err) {
+        console.error("Ошибка в запросе к БД:", err);
         if (!res.headersSent) {
             res.status(500).json({ message: 'Ошибка при создании новой системы', error: err.message });
         }
@@ -51,6 +52,7 @@ router.get('/', authenticateToken, checkDatabasePrivileges, async (req, res) => 
         res.status(200).json({ data: results });
     }
     catch (err) {
+        console.error("Ошибка в запросе к БД:", err);
         res.status(500).json({ message: 'Ошибка получения списка систем', error: err.message });
     }
     finally {
@@ -105,7 +107,7 @@ router.delete('/:id', authenticateToken, checkDatabasePrivileges, async (req, re
     }
     catch (err) {
         console.log(err);
-        
+
         res.status(500).json({ message: `Ошибка при удалении системы ${id}`, error: err.message })
     }
     finally {

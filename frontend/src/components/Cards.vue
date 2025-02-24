@@ -5,7 +5,7 @@
     <section class="cards">
         <div class="cards__search">
             <input type="text" v-model="searchQuery" placeholder="Поиск..." class="cards__search-input">
-            <Filter :selectedTable="selectedTable" :headers="headers" />
+            <Filter :selectedTable="selectedTable" :headers="headers" :token="token" :data="data" />
 
         </div>
         <div class="cards__wrapper"
@@ -46,13 +46,47 @@
             </div>
         </div>
 
-        <div class="cards__wrapper"
-            v-if="filterData.length > 0 && ['system_attributes'].includes(selectedTable)">
+        <div class="cards__wrapper" v-if="filterData.length > 0 && ['system_attributes'].includes(selectedTable)">
             <div class="cards__item" v-for="(item, index) in filterData" :key="index">
                 <div class="cards__header">
                     <div class="cards__title">
-                        <span class="cards__name">{{ item.system_name || item.name }}</span>
-                        <!-- <span class="cards__name cards__name_bold">{{ item.name }}</span> -->
+                        <span class="cards__name cards__name_system">{{ item.system_name }}</span>
+                    </div>
+                    <div class="cards__modal">
+                        <button class="cards__btn-modal" @click="toggleCardBtns(index)">&#8226; &#8226;
+                            &#8226;</button>
+                        <div class="cards__modal-wrap" v-if="showCardBtns[index]">
+                            <button class="cards__btn cards__btn_change" @click="openEditWindow(item)"
+                                v-if="!isRestrictedTable(selectedTable) && role !== 'user'"
+                                aria-label="Изменить запись">
+                                Изменить
+                            </button>
+                            <button class="cards__btn cards__btn_delete" @click="onDeleteRow(item.id)"
+                                v-if="!isRestrictedTable(selectedTable, true) && role !== 'user'"
+                                aria-label="Удалить запись">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cards__attribute">
+                    <div class="cards__attribute-row">
+                        <p class="cards__name cards__value">{{ item.name }}</p>
+                    </div>
+                    <div class="cards__attribute-row">
+                        <p class="cards__name cards__name">{{ item.value }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards__wrapper" v-if="filterData.length > 0 && ['access_rights_attr'].includes(selectedTable)">
+            <div class="cards__item" v-for="(item, index) in filterData" :key="index">
+                <div class="cards__header">
+                    <div class="cards__title">
+                        <span class="cards__name">{{ item.position }}</span>
+                        <span class="cards__name cards__name_bold">{{ item.department }}</span>
+                        <span class="cards__name cards__name_system">{{ item.system_name }}</span>
                     </div>
                     <div class="cards__modal">
                         <button class="cards__btn-modal" @click="toggleCardBtns(index)">&#8226; &#8226;
@@ -71,10 +105,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="cards__attribute" v-if="selectedTable == 'system_attributes'">
-                    <span class="cards__name cards__name_attribute">Название атрибута: <p class="cards__name">{{ item.name }}</p></span>
-                    
-                    <span class="cards__name cards__name_attribute">Значение атрибута:<p class="cards__name">{{ item.value }}</p></span>
+
+                <div class="cards__attribute">
+                    <div class="cards__attribute-row">
+                        <p class="cards__name cards__value">{{ item.attribute }}</p>
+                    </div>
+                    <div class="cards__attribute-row">
+                        <p class="cards__name cards__name">{{ item.value }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,7 +122,7 @@
                 Данная таблица <span>{{ selectedTable }}</span> пустая
             </h1>
         </div>
-        <!-- Если поиск не нашел ничего -->
+
         <div class="table__wrapper table__wrapper_empty" v-else-if="searchNotFound">
             <h1 class="table__explanation">
                 По запросу "<span>{{ searchQuery }}</span>" ничего не найдено
@@ -92,11 +130,9 @@
         </div>
     </section>
 
-    <!-- Компонент для измненения строк -->
     <ChangeRow :selectedTable="selectedTable" v-if="showEditModal" :editableRow="editableRow"
         :userTypeOptions="userTypeOptions" :allSystems="allSystems" @close="closeEditWindow" @save="sendEdit" />
 
-    <!-- Подтверждение удаления -->
     <ConfirmationDialog v-if="showConfirmWindow" title="Подтверждение удаления"
         message="Вы уверены, что хотите удалить эту запись?" @confirmAction="confirmDelete"
         @closeConfirmWindow="showConfirmWindow = false" />
@@ -309,6 +345,7 @@ export default {
 }
 
 .cards__wrapper {
+    padding-bottom: 20px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
@@ -388,7 +425,7 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 5px;
-
+    z-index: 10;
 }
 
 .cards__btn {
@@ -444,14 +481,24 @@ export default {
     background-color: #A7CEA7;
 }
 
+.cards__name_system {
+    color: #99A0AE;
+}
 
 .cards__attribute {
     display: flex;
     justify-content: space-between;
-
+    align-items: center;
+    padding: 6px 0;
 }
+
 .cards__name_attribute {
     font-weight: 600;
+    font-size: 14px;
 }
 
+.cards__value {
+    color: #333;
+    text-transform: uppercase;
+}
 </style>
